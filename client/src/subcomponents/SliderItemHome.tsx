@@ -1,38 +1,29 @@
 import { useState } from "react";
 
-import baseUrl from "../axios/configApi";
+//module external
 import { useRecoilState } from "recoil";
-import { modalState, movieState, showAlert } from "../atoms/modalAtom";
-import { Movies, Payment, Userinfo } from "../typeing";
 import { FaPlay } from "react-icons/fa";
 import { HiOutlineInformationCircle } from "react-icons/hi";
+import { HiOutlineXMark } from "react-icons/hi2";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
+//
+import { modalState, movieState, showAlert } from "../atoms/modalAtom";
+import baseUrl from "../axios/configApi";
+import { Movies, StateTypeAuth } from "../typeing";
+
+//interface
 interface Props {
   item: Movies | null;
 }
 
-interface Account {
-  subscri: {
-    payment: Payment[] | null;
-    isloading: boolean;
-    ErrorMessage: string | null;
-  };
-}
-interface StateTypeAuth {
-  auth: {
-    accessToken: string | null | undefined;
-    userInfo: Userinfo | null;
-    isLoading: boolean;
-    erroMessage: null | string;
-  };
-}
 const SliderItemHome = ({ item }: Props) => {
-  const account = useSelector((state: Account) => state?.subscri);
   const [currentMovie, setCurrentMovie] = useRecoilState(movieState);
   const [showModal, setShowModal] = useRecoilState(modalState);
   const [errorShowMovie, setErrorShowMovie] = useState<string>("");
   const user = useSelector((state: StateTypeAuth) => state?.auth);
+  const navigate = useNavigate();
 
   const [showalret, setShowAlert] = useRecoilState(showAlert);
   const handleShowMovie = () => {
@@ -41,6 +32,7 @@ const SliderItemHome = ({ item }: Props) => {
       setShowModal(true);
       setErrorShowMovie("");
       setShowAlert(false);
+      navigate("/movie");
     } else {
       setErrorShowMovie(
         "برای مشاهده فیلم باید اشتراک داشته باشید یا در سایت ثبت نام کنید"
@@ -62,15 +54,7 @@ const SliderItemHome = ({ item }: Props) => {
           className="absolute top-0 bottom-0 left-0 px-4 py-3"
           onClick={() => setShowAlert(false)}
         >
-          <svg
-            className="fill-current h-6 w-6 text-red-500"
-            role="button"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-          >
-            <title>Close</title>
-            <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
-          </svg>
+          <HiOutlineXMark size={25} />
         </span>
       </div>
 
@@ -110,10 +94,7 @@ const SliderItemHome = ({ item }: Props) => {
 
           <button
             className="mr-4 bannerButton bg-transparent border border-red-500 rounded-md "
-            onClick={() => {
-              setCurrentMovie(item);
-              setShowModal(true);
-            }}
+            onClick={() => handleShowMovie()}
           >
             <HiOutlineInformationCircle className="h-5 w-5 md:h-8 md:w-8" />
             جزئیات

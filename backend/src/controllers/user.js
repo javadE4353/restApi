@@ -2,8 +2,21 @@ import db from "../model/index.js";
 import { Op } from "sequelize";
 import { responce } from "../util/configResponce.js";
 import { paginate } from "../helper/paginate.js";
+import bcrypt from "bcrypt";
+
+
+
 
 export const updateUser = async function (req, res) {
+  if (!req.body.username) {
+    return responce({
+      res,
+      message: "data invalid",
+      code: 400,
+      data: {},
+    });
+  }
+
   const user = await db.user.findOne({
     where: { id: req.params.id },
   });
@@ -26,36 +39,70 @@ export const updateUser = async function (req, res) {
       roleId: Role.toJSON().id,
       userId: user.toJSON().id,
     });
-  } 
-  else {
+  } else {
     const Role = await db.Role.findOne({ where: { name: db.ROLES[1] } });
     await db.RoleHasUser.create({
       roleId: Role.toJSON().id,
       userId: user.toJSON().id,
     });
   }
-
-  try {
-    const updatedRows = await db.user.update(req.body, {
-      where: { id: req.params.id },
-    });
-    console.log(updatedRows);
-    res.status(200).json(updatedRows);
+ if(req.body?.password){
+  const salt = await bcrypt.genSalt(10);
+  const passwordHash = await bcrypt.hash(req.body.password, salt);
+    try {
+    const updatedRows = await db.user.update(
+       {...req.body,password:passwordHash} ,
+      {
+        where: { id: req.params.id },
+      }
+    );
+    return res.status(200).json(updatedRows);
   } catch (err) {
     res.status(500).json(err);
   }
+ }else{
+try {
+    const updatedRows = await db.user.update(
+       req.body ,
+      {
+        where: { id: req.params.id },
+      }
+    );
+   return res.status(200).json(updatedRows);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+ }
+  
 };
 
 // delete user
 export const deleteuser = async function (req, res) {
+  if (!req.params.id) {
+    responce({
+      res,
+      code: 400,
+      message: `There is no user ID `,
+      data: {},
+    });
+  }
   try {
-    const updatedRows = await db.user.destroy({
+    const deleteuser = await db.user.destroy({
       where: { id: req.params.id },
     });
-
-    res.status(200).json(updatedRows);
+    responce({
+      res,
+      code: 200,
+      message: `remove user`,
+      data: deleteuser,
+    });
   } catch (err) {
-    res.status(500).json(err);
+    responce({
+      res,
+      code: 500,
+      message: `error delete user`,
+      data: err,
+    });
   }
 };
 // createUser
@@ -114,7 +161,7 @@ export const createUser = async function (req, res) {
     res,
     code: 201,
     message: `create user ${req.body.username}`,
-    data: newUser,
+    data: [1],
   });
 };
 
@@ -145,9 +192,13 @@ export const getUser = async function (req, res) {
 // getAllUsers
 
 export const getAllUser = async function (req, res) {
+  if (req.query.page === "undefined" && req.query.pageSize === "undefined") {
+    page = 1;
+    pageSize = 3;
+  }
   const pageSize = Number(req.query.pageSize);
   const page = Number(req.query.page);
-  console.log(`pageSize:${pageSize}  /////// page:${page}`);
+
   try {
     const users = await db.user.findAll(
       paginate(
@@ -168,7 +219,6 @@ export const getAllUser = async function (req, res) {
       )
     );
     const count = await db.user.count();
-    console.log(users);
     return responce({
       res,
       code: 200,
@@ -176,7 +226,7 @@ export const getAllUser = async function (req, res) {
       data: [users, { count: count }],
     });
   } catch (err) {
-    console.log(err);
+ 
 
     responce({
       res,

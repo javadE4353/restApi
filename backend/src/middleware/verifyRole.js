@@ -5,7 +5,6 @@ const verifyRoles = (...allowedRoles) => {
       const result =rolesArray.includes(req.role)
         // .find((val) => val == true);
       if (!result) return res.sendStatus(401);
-      console.log("verify Role____________________________")
       next();
     };
   };

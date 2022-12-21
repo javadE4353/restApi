@@ -1,6 +1,6 @@
 import {responce} from "../util/configResponce.js"
 export const verifyAdmin=(req,res,next)=>{
-    const role=req.role;
+    const role=req.roles;
 
     if (role !== "admin" || role !== "editor") {
         return responce({
@@ -9,5 +9,8 @@ export const verifyAdmin=(req,res,next)=>{
             message:"You do not have access permission",
         })
     }
+    console.log("verify Role____________________________")
+    console.log(role)
+
     next()
 }

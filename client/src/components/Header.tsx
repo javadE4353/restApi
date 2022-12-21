@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-
+//
 import MenuDesktop from "../subcomponents/MenuDestop";
-
+//component
 const Header: React.FC = () => {
   const [isScrolled, setIscrolled] = useState<boolean>(false);
 

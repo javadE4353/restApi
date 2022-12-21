@@ -26,7 +26,7 @@ app.use(credentials);
 app.use(cors(corsOption));
 configMiddleware(express, app);
 app.use(coockieparser());
-logError()
+logError();
 // // define route
 app.use("/api/v1/", router);
 

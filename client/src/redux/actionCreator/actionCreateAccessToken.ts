@@ -23,9 +23,7 @@ type DispatchType = (args: PayloadRefreshToken) => PayloadRefreshToken;
 const newAccessTokenAction = (dispaTch:Dispatch) => async (dispatch: DispatchType) => {
   try {
     dispatch({ type: ACCESSTOKEN_REQUEST });
-
     const response = await axiospublic.get("/auth/refreshtoken");
-    
     dispaTch({
       type: REFRESH_ACCESSTOKEN,
       payload: {

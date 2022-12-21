@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, CSSProperties } from "react";
+
+//module external
+import { useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
-import { modalMylist, modalState, movieState } from "../atoms/modalAtom";
 import ReactPlayer from "react-player/lazy";
 import { FaPlay } from "react-icons/fa";
 import { HiOutlineCheck } from "react-icons/hi";
@@ -8,6 +10,14 @@ import { BsPlus } from "react-icons/bs";
 import { BsHandThumbsUpFill } from "react-icons/bs";
 import { BsFillVolumeMuteFill } from "react-icons/bs";
 import { BsFillVolumeUpFill } from "react-icons/bs";
+import MuiModal from "@mui/material/Modal";
+import toast, { Toaster } from "react-hot-toast";
+import { Dispatch } from "redux";
+import { useSelector, useDispatch } from "react-redux";
+import ClipLoader from "react-spinners/ClipLoader";
+import { MdOutlinePlaylistAdd } from "react-icons/md";
+
+//
 import {
   Element,
   Genre,
@@ -15,13 +25,10 @@ import {
   Userinfo,
   CommentType,
   Ratings,
+  StateTypeAuth,
 } from "../typeing";
-import MuiModal from "@mui/material/Modal";
-import toast, { Toaster } from "react-hot-toast";
-import { Dispatch } from "redux";
-import { useSelector, useDispatch } from "react-redux";
-import ClipLoader from "react-spinners/ClipLoader";
 
+import { modalMylist, modalState, movieState } from "../atoms/modalAtom";
 import {
   insertmylist,
   getAllmylist,
@@ -29,7 +36,6 @@ import {
 } from "../redux/actionCreator/actionCreateMylist";
 import apiConfig from "../axios/configApi";
 import { BsX } from "react-icons/bs";
-import { MdOutlinePlaylistAdd } from "react-icons/md";
 import useAxiosPrivate from "../hook/useAxiosPrivate";
 import Comments from "../subcomponents/Comments";
 import { getComments } from "../redux/actionCreator/actionCreateComment";
@@ -37,6 +43,9 @@ import {
   getRatings,
   insertRatings,
 } from "../redux/actionCreator/actionCreateRatings";
+import getmovies, { updatemovie } from "../redux/actionCreator/actionMovie";
+
+//interface
 const override: CSSProperties = {
   display: "block",
   margin: "0 auto",
@@ -47,16 +56,7 @@ const override: CSSProperties = {
   right: "44%",
 };
 interface Mylist {
-  mylist: { mylist: Movies[] , isloading: boolean};
- 
-}
-interface StateTypeAuth {
-  auth: {
-    accessToken: string | null | undefined;
-    userInfo: Userinfo | null;
-    isLoading: boolean;
-    erroMessage: null | string;
-  };
+  mylist: { mylist: Movies[]; isloading: boolean };
 }
 
 interface Comment {
@@ -69,12 +69,17 @@ interface Comment {
 }
 interface RatingsState {
   ratings: {
-    ratings: Ratings[] | null;
+    ratings: Ratings[];
     isloading: boolean;
+    status: number;
   };
 }
+
+//component
 function Modal() {
   let [color, setColor] = useState("#ffffff");
+  const [modal, setModal] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const [showmylist, setShowMylist] = useRecoilState(modalMylist);
   const [movie, setMovie] = useRecoilState(movieState);
@@ -103,26 +108,31 @@ function Modal() {
     borderRadius: "9999px",
     maxWidth: "1000px",
   };
+
   useEffect(() => {
     if (!movie) return;
 
     async function fetchMovie() {
-      const data = await fetch(
-        `https://api.themoviedb.org/3/${
-          movie?.media_type === "tv" ? "tv" : "movie"
-        }/${movie?.id}?api_key=${
-          apiConfig.apiKey
-        }&language=en-US&append_to_response=videos`
-      ).then((response) => response.json());
-      if (data?.videos) {
-        console.log(data?.videos?.results);
-        const index = data.videos.results.findIndex(
-          (element: Element) => element.type === "Trailer"
-        );
-        setTrailer(data.videos?.results[index]?.key);
-      }
-      if (data?.genres) {
-        setGenres(data.genres);
+      try {
+        const data = await fetch(
+          `https://api.themoviedb.org/3/${
+            movie?.media_type === "tv" ? "tv" : "movie"
+          }/${movie?.movieid}?api_key=${
+            apiConfig.apiKey
+          }&language=en-US&append_to_response=videos`
+        ).then((response) => response.json());
+        if (data?.videos) {
+          console.log(data?.videos?.results);
+          const index = data.videos.results.findIndex(
+            (element: Element) => element.type === "Trailer"
+          );
+          setTrailer(data.videos?.results[index]?.key);
+        }
+        if (data?.genres) {
+          setGenres(data.genres);
+        }
+      } catch (error) {
+        // console.log(error)
       }
     }
 
@@ -134,6 +144,8 @@ function Modal() {
     setMovie(null);
     setShowMylist(!showmylist);
     toast.dismiss();
+    navigate("/");
+    setModal(false);
   };
 
   //   // Find all the movies in the user's list
@@ -143,7 +155,6 @@ function Modal() {
         (item: Movies) =>
           item.movieid === movie?.id || item.movieid === movie?.movieid
       );
-      console.log(dublicate);
       if (dublicate !== undefined) {
         setMovies(dublicate);
         setAddedToList(true);
@@ -153,27 +164,32 @@ function Modal() {
       }
     }
   }, [movie]);
+
+  const getRatingsAll = useCallback(() => {
+    if (movie?.title) {
+      dispatch(getRatings(movie?.title, axiosPrivate));
+    }
+  }, [movie, rated]);
+
   const handlechakRatings = useCallback(() => {
-    if (user?.accessToken && user?.userInfo?.id) {
-      const dublicate = stateRatings?.ratings?.find(
-        (item: Ratings) =>
-          item.movietitle === movie?.original_title ||
+    if (user?.userInfo?.id && stateRatings?.ratings) {
+      const dublicate = stateRatings?.ratings?.find((item: Ratings) => {
+        if (
+          item.userId === user?.userInfo?.id &&
           item.movietitle === movie?.title
-      );
-      if (dublicate !== undefined && dublicate?.ratings !== null) {
-        setRatings(dublicate?.ratings);
+        ) {
+          return item;
+        }
+      });
+      if (dublicate !== undefined && dublicate?.ratings !== null && movie) {
+        setRatings(movie?.vote_count);
         setRated(true);
       } else {
         setRated(false);
       }
     }
-  }, [movie, rated]);
-  const getRatingsAll = useCallback(() => {
-    if (movie?.original_title) {
-      console.log(movie)
-      dispatch(getRatings(movie?.original_title, axiosPrivate));
-    }
-  }, [movie, rated]);
+  }, [movie, rated, stateRatings.status]);
+
   //   // Check if the movie is already in the user's list
 
   const handleList = () => {
@@ -182,7 +198,6 @@ function Modal() {
       user?.userInfo?.id !== undefined &&
       addedToList === true
     ) {
-      console.log(movies?.id);
       if (movies?.movieid) {
         dispatch(
           removeMovieMylist(user?.userInfo?.id, movies?.movieid, axiosPrivate)
@@ -211,34 +226,89 @@ function Modal() {
   };
 
   const handleRatings = () => {
-    if (movie?.original_title && rated === false) {
-      const Ratings = {
-        username: user?.userInfo?.username,
-        movietitle: movie?.original_title,
-        ratings: movie?.vote_count + 1,
+    if (movie) {
+      const movieItem = {
+        adult: movie?.adult,
+        backdrop_path: movie?.backdrop_path,
+        genre_ids: movie?.genre_ids,
+        id: movie?.id,
+        original_language: movie?.original_language,
+        original_title: movie?.original_title,
+        overview: movie?.overview,
+        popularity: movie?.popularity,
+        poster_path: movie?.poster_path,
+        release_date: movie?.release_date,
+        title: movie?.title,
+        video: movie?.video,
+        vote_average: movie?.vote_average,
+        vote_count: movie?.vote_count,
+        media_type: movie?.media_type,
+        movieid: movie?.movieid,
+        username: movie?.username,
+        userid: movie?.userid,
+        roleuser: movie?.roleuser,
+        createdAt: movie?.createdAt,
       };
-      dispatch(insertRatings(Ratings,movie?.original_title, axiosPrivate));
-      setRatings(Ratings?.ratings);
-      setRated(!rated);
-    } else if (movie?.original_title && rated === true) {
-      const Ratings = {
-        username: user?.userInfo?.username,
-        movietitle: movie?.original_title,
-        ratings: movie?.vote_count - 1,
-      };
-      dispatch(insertRatings(Ratings,movie?.original_title, axiosPrivate));
-      setRatings(Ratings?.ratings);
-      setRated(!rated);
+      if (movie?.original_title && rated === false && user?.userInfo?.id) {
+        const Ratings: Ratings = {
+          username: user?.userInfo?.username,
+          movietitle: movie?.original_title,
+          ratings: movie?.vote_count + 1,
+          userId: user?.userInfo?.id,
+        };
+        setMovie({ ...movieItem, vote_count: Ratings?.ratings });
+        dispatch(
+          insertRatings(
+            Ratings,
+            { ...movieItem, vote_count: Ratings?.ratings },
+            movie?.title,
+            movie?.id,
+            user?.userInfo?.id,
+            axiosPrivate
+          )
+        );
+        setRatings(Ratings?.ratings);
+        setRated(!rated);
+      } else if (
+        movie?.original_title &&
+        rated === true &&
+        user?.userInfo?.id
+      ) {
+        const Ratings: Ratings = {
+          username: user?.userInfo?.username,
+          movietitle: movie?.original_title,
+          ratings: movie?.vote_count - 1,
+          userId: user?.userInfo?.id,
+        };
+        setMovie({ ...movieItem, vote_count: Ratings?.ratings });
+        dispatch(
+          insertRatings(
+            Ratings,
+            { ...movieItem, vote_count: Ratings?.ratings },
+            movie?.title,
+            movie?.id,
+            user?.userInfo?.id,
+            axiosPrivate
+          )
+        );
+        setRatings(Ratings?.ratings);
+        setRated(!rated);
+      }
     }
   };
 
   useEffect(() => {
-    mylistdata();
     getRatingsAll();
+    mylistdata();
     handlechakRatings();
   }, [movie]);
 
-  console.log(stateRatings)
+  useEffect(() => {
+    setModal(true);
+  }, []);
+  useEffect(() => {
+    handlechakRatings();
+  }, [stateRatings?.status]);
 
   return (
     <>
@@ -257,7 +327,7 @@ function Modal() {
       </MuiModal>
 
       <MuiModal
-        open={showModal}
+        open={modal}
         onClose={handleClose}
         className="fixed !top-7 left-0 right-0 z-50 mx-auto w-full max-w-5xl overflow-hidden overflow-y-scroll rounded-md scrollbar-hide"
       >

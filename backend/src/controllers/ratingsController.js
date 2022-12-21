@@ -1,55 +1,66 @@
 import db from "../model/index.js";
 import { responce } from "../util/configResponce.js";
-import {Op} from "sequelize"
+import { Op } from "sequelize";
 
-export const ratingsController=new( class RatingsController{
+export const ratingsController = new (class RatingsController {
+  constructor() {}
 
-constructor(){}
+  //add rating
+  async addRatings(req, res) {
+    const { username, movietitle, ratings, userId } = req.body;
 
-async addRatings(req,res){
+    if (!username && !movietitle) {
+      return res.status(400).send("");
+    }
+    const user = await db.user.findOne({ where: { username: username } });
 
-const {username,movietitle,ratings}=req.body;
+    if (!user) {
+      return res.status(400).send("");
+    }
+    const getratings = await db.Ratings.findOne({
+      where: { [Op.and]: [{ userId: userId }, { movietitle: movietitle }] },
+    });
 
-if (!username && !movietitle) {
-    return res.status(400).send("")
-}
+    if (getratings) {
+        const Rating = await db.Ratings.destroy({
+          where: { [Op.and]: [{ userId: userId }, { movietitle: movietitle }] },
+        });
+  
+       return responce({
+          res,
+          code: 200,
+          message: "ok",
+          data: Rating,
+        });
+      }
 
-const user=await db.user.findOne({where:{username:username}})
+    if (getratings === null) {
+      const Rating = await db.Ratings.create(req.body);
+      return responce({
+        res,
+        code: 200,
+        message: "ok",
+        data: Rating,
+      });
+    }
 
-if (!user) {
-    return res.status(400).send("")
-}
+  }
 
-const getratings=await db.Ratings.findOne({where:{[Op.and]:[{username:username},{movietitle:movietitle}]}})
-let Rating;
-if (getratings === null) {
-     Rating=await db.Ratings.create(req.body)
+  //get rating
+  async getAllRating(req, res) {
+    const { movietitle } = req.query;
+    if (!movietitle) {
+      return res.status(400).send("");
+    }
+    const ratings = await db.Ratings.findAll({
+      where: { movietitle: movietitle },
+    });
 
-}
- Rating=await db.Ratings.update(req.body,{where:{[Op.and]:[{username:username},{movietitle:movietitle}]}})
-
-responce({
-    res,
-    code:200,
-    message:"ok",
-    data:Rating
-})
-
-}
-async getAllRating(req,res){
-const {movietitle}=req.query
-if (!movietitle) {
-    return res.status(400).send("")
-}
-const ratings=await db.Ratings.findAll({where:{movietitle:movietitle}})
-
-responce({
-    res,
-    code:200,
-    message:"ok",
-    data:ratings
-})
-
-}
-
-})()
+    responce({
+      res,
+      code: 200,
+      message: "ok",
+      data: ratings,
+    });
+  }
+})();

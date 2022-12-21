@@ -1,5 +1,7 @@
 import express from "express";
 import authRouter from "./authRoute/auth.js";
+import cateRouter from "./category/category.js";
+import movieRouter from "./movieRoute/movieRoute.js";
 import mylistRoute from "./mylistRoute/mylistRoute.js";
 import payRouter from "./pay/pay.js";
 import ratingsRoute from "./ratings/rating.js";
@@ -17,5 +19,7 @@ router.use("/ratings", ratingsRoute);
 router.use("/payment", payRouter);
 router.use("/trans", transRoute);
 router.use("/account", subsRoute);
+router.use("/movies", movieRouter);
+router.use("/category", cateRouter);
 
 export default router;

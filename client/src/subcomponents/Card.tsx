@@ -1,24 +1,20 @@
-import {useState}from "react"
+import { useState } from "react";
 
-
-import { Link } from "react-router-dom";
-import { Movies, Userinfo } from "../typeing";
+//module external
 import { useRecoilState } from "recoil";
-import { modalState, movieState, showAlert } from "../atoms/modalAtom";
-import Modal from "../components/Modal";
 import { useSelector } from "react-redux";
+
+//
+import { Movies, StateTypeAuth } from "../typeing";
+import Modal from "../components/Modal";
+import { modalState, movieState, showAlert } from "../atoms/modalAtom";
+
+//interface
 interface Props {
   movie: Movies | null;
 }
 
-interface StateTypeAuth {
-  auth: {
-    accessToken: string | null;
-    userInfo: Userinfo | null;
-    isLoading: boolean;
-    erroMessage: null | string;
-  };
-}
+//component
 const Card = ({ movie }: Props) => {
   const accesstoken = useSelector((state: StateTypeAuth) => state?.auth);
   const [currentMovie, setCurrentMovie] = useRecoilState(movieState);
@@ -42,13 +38,9 @@ const Card = ({ movie }: Props) => {
     }
   };
 
-
-
   return (
     <>
-  <div
-        onClick={() => handleShowMovie()}
-      >
+      <div onClick={() => handleShowMovie()}>
         <div className="w-[21rem] max-w-[100%] bg-black rounded-xl p-3 text-white m-5 flex flex-col  cursor-pointer text-xl hover:scale-110">
           <img
             className="w-full self-center rounded-lg h-[476px]"

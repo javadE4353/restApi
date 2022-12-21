@@ -8,11 +8,13 @@ import {Ratings} from "../../../typeing"
 interface ratings {
   ratings: Ratings[] | null;
   isloading: boolean;
+  status:number
 }
 
 const initialState = {
     ratings: null,
   isloading: false,
+  status:0
 };
 
 const ratingsReducer = (state: ratings = initialState, action: Action) => {
@@ -26,7 +28,8 @@ const ratingsReducer = (state: ratings = initialState, action: Action) => {
       break;
     case SUCCESSRATING:
       return {
-        ratings: action?.payload,
+        ratings: action?.payload?.rating,
+        status:action?.payload?.status,
         isloading: false,
       };
       break;

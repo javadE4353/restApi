@@ -1,12 +1,22 @@
-import { useState, useEffect, CSSProperties } from "react";
+import { useState, CSSProperties } from "react";
+
+//module external
 import { useForm, SubmitHandler } from "react-hook-form";
 import ClipLoader from "react-spinners/ClipLoader";
-
 import { useDispatch, useSelector } from "react-redux";
 import { Dispatch } from "redux";
 import useAxiosPrivate from "../hook/useAxiosPrivate";
 import MuiModal from "@mui/material/Modal";
+import { HiXMark, HiOutlineXMark } from "react-icons/hi2";
+import { useRecoilState } from "recoil";
+import {
+  modalAccount,
+  modalCreateUser,
+  modalEditUser,
+  payAccount,
+} from "../atoms/modalAtom";
 
+//
 import {
   deleteUser,
   getUser,
@@ -14,11 +24,10 @@ import {
   insertUser,
   updateUser,
 } from "../redux/actionCreator/actionCreateUsers";
-import { Users, Userinfo, Payment } from "../typeing";
-import { useRecoilState } from "recoil";
-import { modalAccount, modalCreateUser, modalEditUser, payAccount } from "../atoms/modalAtom";
-import { useNavigate } from "react-router-dom";
+import { Users, Userinfo, Payment, StateTypeAuth } from "../typeing";
 import { insertSubscription } from "../redux/actionCreator/actionCreatePayment";
+
+//interface
 const override: CSSProperties = {
   display: "block",
   margin: "0 auto",
@@ -28,14 +37,7 @@ const override: CSSProperties = {
   transform: "translate(-50%, -50%)",
   right: "44%",
 };
-interface StateTypeAuth {
-    auth: {
-      accessToken: string | null | undefined;
-      userInfo: Userinfo | null;
-      isLoading: boolean;
-      erroMessage: null | string;
-    };
-  }
+
 interface State {
   users: {
     user: Users | null;
@@ -52,21 +54,21 @@ interface Inputs {
   mobile: string;
 }
 interface Subscri {
-    subscri:{
-        payment:Payment[] | null;
-        isloading: boolean;
-    }
+  subscri: {
+    payment: Payment[] | null;
+    isloading: boolean;
+  };
 }
 interface Props {
-  data:{
-    name:string,
-    amount:number
-  }
-}  
-const FormPay = ({data}:Props) => {
+  data: {
+    name: string;
+    amount: number;
+  };
+}
+const FormPay = ({ data }: Props) => {
   let [color, setColor] = useState("#ffffff");
-  const [ShowmodalAccount, setShowmodalAccount] =useRecoilState(modalAccount);
-  const [payaccount, setpayAccount] =useRecoilState(payAccount);
+  const [ShowmodalAccount, setShowmodalAccount] = useRecoilState(modalAccount);
+  const [payaccount, setpayAccount] = useRecoilState(payAccount);
 
   const dispatch: Dispatch<any> = useDispatch();
   const user = useSelector((state: StateTypeAuth) => state?.auth);
@@ -81,15 +83,21 @@ const FormPay = ({data}:Props) => {
     setShowmodalAccount(!ShowmodalAccount);
   };
   const onSubmit: SubmitHandler<Inputs> = async (Data) => {
-    console.log(user?.userInfo?.id)
-        if(user?.userInfo?.id){
-            const formData = new FormData();
-            formData.append("username", Data.username);
-            formData.append("account", data?.name);
-            formData.append("mobile", Data.mobile);
-            formData.append("email", Data.email);
-            dispatch(insertSubscription(formData,user?.userInfo?.id,data?.amount,axiosPrivate));
-        }
+    if (user?.userInfo?.id) {
+      const formData = new FormData();
+      formData.append("username", Data.username);
+      formData.append("account", data?.name);
+      formData.append("mobile", Data.mobile);
+      formData.append("email", Data.email);
+      dispatch(
+        insertSubscription(
+          formData,
+          user?.userInfo?.id,
+          data?.amount,
+          axiosPrivate
+        )
+      );
+    }
   };
   return (
     <>
@@ -114,42 +122,27 @@ const FormPay = ({data}:Props) => {
       >
         <div>
           <div className="flex justify-center m-5">
-            <button
-              className="block text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-              type="button"
-            >
+            <span className="block text-white bg-red-600 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
               خرید اشتراک
-            </button>
+            </span>
           </div>
 
           {/* <!-- Main modal --> */}
           <div className=" z-50 flex justify-center items-center w-full md:inset-0 h-modal md:h-full">
             <div className="relative p-4 w-full max-w-2xl h-full md:h-auto">
               {/* <!-- Modal content --> */}
-              <div className="relative p-4 bg-white rounded-lg shadow dark:bg-gray-800 sm:p-5">
+              <div className="relative p-4 bg-[#1b2a4e] rounded-lg shadow dark:bg-gray-800 sm:p-5">
                 {/* <!-- Modal header --> */}
                 <div className="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
-                  <h3 className="text-lg font-semibold text-blue-900 dark:text-white">
-                    خرید اشتراک 
+                  <h3 className="text-lg font-semibold text-white dark:text-white">
+                    بستن
                   </h3>
                   <button
                     type="button"
                     className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
                     onClick={() => handleClose()}
                   >
-                    <svg
-                      aria-hidden="true"
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clip-rule="evenodd"
-                      ></path>
-                    </svg>
+                    <HiOutlineXMark size={25} className="text-red-400" />
                     <span className="sr-only">بستن</span>
                   </button>
                 </div>
@@ -157,21 +150,20 @@ const FormPay = ({data}:Props) => {
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <div className="grid gap-4 mb-4 sm:grid-cols-2">
                     <div>
-                      
                       <label
                         form=""
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        className="block mb-2 text-sm font-medium text-white dark:text-white"
                       >
                         {errors.username && (
                           <p className="text-sm  text-orange-500">
-                            نام کاربری  را وارد کنید
+                            نام کاربری را وارد کنید
                           </p>
                         )}
                         نام کاربری
                       </label>
                       <input
                         type="text"
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="نام کاربری"
                         {...register("username")}
                       />
@@ -180,18 +172,18 @@ const FormPay = ({data}:Props) => {
                     <div>
                       <label
                         form=""
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        className="block mb-2 text-sm font-medium text-white dark:text-white"
                       >
                         {errors.email && (
                           <p className="text-sm  text-orange-500">
-                             ایمیل  را وارد کنید
+                            ایمیل را وارد کنید
                           </p>
                         )}
                         ایمیل
                       </label>
                       <input
                         type="email"
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="ایمیل"
                         {...register("email")}
                       />
@@ -199,18 +191,18 @@ const FormPay = ({data}:Props) => {
                     <div>
                       <label
                         form=""
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        className="block mb-2 text-sm font-medium text-white dark:text-white"
                       >
                         {errors.mobile && (
                           <p className="text-sm  text-orange-500">
-                             شماره موبایل  را وارد کنید
+                            شماره موبایل را وارد کنید
                           </p>
                         )}
                         موبایل
                       </label>
                       <input
                         type="tel"
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="09354635435"
                         {...register("mobile")}
                       />
@@ -218,22 +210,30 @@ const FormPay = ({data}:Props) => {
                     <div>
                       <label
                         form=""
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        className="block mb-2 text-sm font-medium text-white dark:text-white"
                       >
                         نوع اکانت
                       </label>
                       <input
                         type="tel"
-                        value={` خرید اشتراک ${data?.name === "gold"?'طلایی':data.name === "Bronze"?"برنز":data.name === "silver"?"نقره ی":null} : ${data?.amount} هزار تومان`}
+                        value={` خرید اشتراک ${
+                          data?.name === "gold"
+                            ? "طلایی"
+                            : data.name === "Bronze"
+                            ? "برنز"
+                            : data.name === "silver"
+                            ? "نقره ی"
+                            : null
+                        } : ${data?.amount} هزار تومان`}
                         disabled={true}
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       />
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <button
                       type="submit"
-                      className="text-blue-400 bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                      className="text-white bg-red-600 hover:bg-red-400 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-sm text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
                     >
                       خرید اشتراک
                     </button>

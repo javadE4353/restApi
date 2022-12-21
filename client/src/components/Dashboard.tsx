@@ -1,5 +1,9 @@
 import {useEffect}from "react"
-import { useDispatch, useSelector } from "react-redux";
+
+//module external
+import { modalSidebarAdmin } from "../atoms/modalAtom";
+import { useRecoilState } from "recoil";
+import { useSelector } from "react-redux";
 import {
   Outlet,
   useNavigate,
@@ -7,36 +11,23 @@ import {
   useLocation,
   Link,
 } from "react-router-dom";
-import { useRecoilState } from "recoil";
-import { Dispatch } from "redux";
-import { modalSidebarAdmin, modalState } from "../atoms/modalAtom";
+
+//
 import SidebarDashboard from "../subcomponents/Sidebardashboard";
-import { Userinfo } from "../typeing";
-interface togglesidebar {
-  sidebar: { toggle: boolean };
-}
+import { StateTypeAuth, Userinfo } from "../typeing";
 
-interface StateTypeAuth {
-  auth: {
-    accessToken: string | null | undefined;
-    userInfo: Userinfo | null;
-    isLoading: boolean;
-    erroMessage: null | string;
-  };
-}
-
+//interface
 interface Props{
   path:string
 }
 
+//component
 const Dashboard = ({path}:Props) => {
   const navigate=useNavigate()
   const [Sidebar, setSidebar] = useRecoilState(modalSidebarAdmin);
 
-  const user = useSelector((state: StateTypeAuth) => state?.auth?.userInfo);
-
   useEffect(()=>{
-    navigate(`/dashboard/${path}`)
+    // navigate(`/dashboard/profile`)
   },[])
   return (
     <section>

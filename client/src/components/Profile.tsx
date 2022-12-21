@@ -1,57 +1,62 @@
-import { useEffect, useState } from "react";
+import {useEffect} from "react"
+
+//module external
 import { useSelector } from "react-redux";
-import { Userinfo, Users } from "../typeing";
-import * as timeago from "timeago.js/lib/index";
 import EditUser from "./EditeUser";
 import { useRecoilState } from "recoil";
 import { modalEditUser } from "../atoms/modalAtom";
+import { HiEllipsisVertical } from "react-icons/hi2";
+import { motion } from "framer-motion";
+import * as timeago from "timeago.js/lib/index";
 
-interface StateTypeAuth {
-  auth: {
-    accessToken: string | null | undefined;
-    userInfo: Userinfo | null;
-    isLoading: boolean;
-    erroMessage: null | string;
-  };
-}
+//
+import { StateTypeAuth, Users } from "../typeing";
+import { useDispatch } from "react-redux";
+import { Dispatch } from "redux";
+import useAxiosPrivate from "../hook/useAxiosPrivate";
+import {getUser } from "../redux/actionCreator/actionCreateUsers";
+
+//interface
 interface State {
   users: {
     user: Users | null;
     count: number;
-    insert: Users | null;
+    insert: number;
     isloading: boolean;
     ErrorMessage: string | null;
   };
 }
+
+//component
 const Profile = () => {
   const [showModal, setShowModal] = useRecoilState(modalEditUser);
-  const [showEdit,setShowEdit]=useState<boolean>(false)
   const user = useSelector((state: StateTypeAuth) => state?.auth);
   const stateUsers = useSelector((state: State) => state?.users);
-
+  const dispatch: Dispatch<any> = useDispatch();
+  const axiosPrivate = useAxiosPrivate();
+  useEffect(() => {
+      if(user?.userInfo?.id){
+        dispatch(getUser(axiosPrivate,user?.userInfo?.id));
+      }
+  }, [])
+  
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 0,}}
+      animate={{ opacity: 1, transition: { duration: 0.2 } }}
+      exit={{ opacity: 0, transition: { duration: 0.1 } }}
+    >
       <section className=" bg-[#071e34] flex font-medium items-center justify-center h-screen">
         <section className="w-64 mx-auto bg-[#20354b] rounded-2xl px-8 py-6 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-gray-400 text-sm">
               {timeago?.format(stateUsers?.user?.createdAt || "2022-10-25")}
             </span>
-            <span className="text-emerald-400" onClick={()=>setShowModal(!showModal)}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
-                />
-              </svg>
+            <span
+              className="text-emerald-400"
+              onClick={() => setShowModal(!showModal)}
+            >
+              <HiEllipsisVertical size={25} />
             </span>
           </div>
           <div className="mt-6 w-fit mx-auto">
@@ -74,17 +79,23 @@ const Profile = () => {
             {user?.userInfo?.role}
           </p>
 
-          <div className="h-1 w-full bg-black mt-8 rounded-full">
+           {/* <div className="h-1 w-full bg-black mt-8 rounded-full">
             <div className="h-1 rounded-full w-2/5 bg-yellow-500 "></div>
-          </div>
-          <div className="mt-3 text-white text-sm">
-            <span className="text-gray-400 font-semibold">Storage:</span>
-            <span>40%</span>
-          </div>
+          </div> */}
+          {
+            timeago.format(stateUsers?.user?.updatedAt || "").includes("just")?
+          <div className="mt-3 text-white text-sm text-center">
+            <span className="text-gray-400 font-semibold">ویرایش انجام شد</span>
+          </div> 
+            :
+            null
+          }
         </section>
       </section>
-      {showModal && user?.userInfo?.id? <EditUser id={user?.userInfo?.id}/>:null}
-    </>
+      {showModal && user?.userInfo?.id ? (
+        <EditUser id={user?.userInfo?.id} />
+      ) : null}
+    </motion.div>
   );
 };
 

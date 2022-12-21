@@ -45,18 +45,19 @@ import {
   export const insertComment = (data:CommentType, axiosPrivate: AxiosInstance) => {
     return async (dispatch: DispatchType) => {
       dispatch({ type: REQUESTCOMMENT });
-  
       try {
+
         const response = await axiosPrivate.post(`${BASE_URL}/review`, data);
         // console.log(response);
         dispatch({
           type: INSERTCOMMENT,
           payload:{insert:response?.status,ErrorMassege:null,comment:null}
         });
-      } catch (error) {
-        // console.log(error);
+      } catch (error:any) {
+        console.log(error);
         dispatch({
           type: FAILDCOMMENT,
+          payload:{ErrorMassege:error?.status,comment:null,insert:null}
         });
       }
     };

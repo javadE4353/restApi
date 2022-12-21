@@ -1,38 +1,28 @@
-import { useState, useEffect } from "react";
+//module external
 import { HiMenuAlt3 } from "react-icons/hi";
-import {
-  actionclosesidebar,
-  actionopensidebar,
-} from "../redux/actionCreator/actionCreateSidebar";
+import { actionopensidebar } from "../redux/actionCreator/actionCreateSidebar";
 import { useDispatch, useSelector } from "react-redux";
 import { Dispatch } from "redux";
 import { Link, useNavigate } from "react-router-dom";
-import { HiMagnifyingGlass } from "react-icons/hi2";
-import { Userinfo } from "../typeing";
+
+//
+import { StateTypeAuth } from "../typeing";
 import { axiospublic } from "../axios/configApi";
 import { actionLogout } from "../redux/actionCreator/actionCreateAuth";
 import InputSearch from "./InputSearch";
-interface togglesidebar {
-  sidebar: { toggle: boolean };
-}
 
-interface StateTypeAuth {
-  auth: {
-    accessToken: string | null | undefined;
-    userInfo: Userinfo | null;
-    isLoading: boolean;
-    erroMessage: null | string;
-  };
-}
+//interface
+
 interface Props {
   isScrolled: boolean;
 }
 interface togglesidebar {
   sidebar: { toggle: boolean };
 }
+
+//component
 const MenuDesktop: React.FC<Props> = ({ isScrolled }) => {
   const dispatch: Dispatch<any> = useDispatch();
-  const toggle = useSelector((state: togglesidebar) => state?.sidebar?.toggle);
   const user = useSelector((state: StateTypeAuth) => state?.auth?.userInfo);
   const navigate = useNavigate();
   const hanlerLogout = async () => {

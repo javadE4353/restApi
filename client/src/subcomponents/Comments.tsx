@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState,CSSProperties } from "react";
+import { useEffect, useState, CSSProperties } from "react";
+
+//module external
 import {
   getComments,
   insertComment,
@@ -7,12 +9,18 @@ import { useSelector, useDispatch } from "react-redux";
 import { Dispatch } from "redux";
 import { useForm, SubmitHandler } from "react-hook-form";
 import * as timeago from "timeago.js/lib/index";
-
-import { CommentType, Movies } from "../typeing";
-import useAxiosPrivate from "../hook/useAxiosPrivate";
-import { axiospublic } from "../axios/configApi";
 import MuiModal from "@mui/material/Modal";
 import ClipLoader from "react-spinners/ClipLoader";
+import {
+  HiOutlineChatBubbleOvalLeftEllipsis,
+  HiOutlineEllipsisHorizontal,
+} from "react-icons/hi2";
+
+//
+import { CommentType, Movies } from "../typeing";
+import useAxiosPrivate from "../hook/useAxiosPrivate";
+
+//interface
 const override: CSSProperties = {
   display: "block",
   margin: "0 auto",
@@ -22,9 +30,7 @@ const override: CSSProperties = {
   transform: "translate(-50%, -50%)",
   right: "44%",
 };
-interface Mylist {
-  mylist: { mylist: Movies[] };
-}
+
 interface Props {
   items: CommentType[] | null;
   username: string;
@@ -43,6 +49,8 @@ interface Comment {
     isLoading: boolean;
   };
 }
+
+//component
 const Comments = ({
   items,
   username,
@@ -53,7 +61,6 @@ const Comments = ({
   movie,
 }: Props) => {
   let [color, setColor] = useState("#ffffff");
-  const [count, setCount] = useState<number>(0);
   const [collaps, setCollaps] = useState<boolean>(false);
   const [id, setId] = useState<number | null>(null);
   const axiosPrivate = useAxiosPrivate();
@@ -68,27 +75,21 @@ const Comments = ({
   } = useForm();
 
   const onSubmit = (data: any) => {
-    try {
-      const dataComent = {
-        movieid,
-        username,
-        movietitle: movietitle,
-        content: data?.textarea,
-        ratings: ratings + newratings,
-      };
-      dispatch(insertComment(dataComent, axiosPrivate));
-    } catch (error: any) {
-      let ErrorMessage = "";
-    }
-    // setErrormsg(ErrorMessage)
+    const dataComent = {
+      movieid,
+      username,
+      movietitle: movietitle,
+      content: data?.textarea,
+      ratings: ratings + newratings,
+    };
+    dispatch(insertComment(dataComent, axiosPrivate));
+    console.log("submitComment");
   };
 
-
-  const handleOption=(id:number)=>{
-    setCollaps(!collaps)
-    setId(id)
-  }
-
+  const handleOption = (id: number) => {
+    setCollaps(!collaps);
+    setId(id);
+  };
 
   useEffect(() => {
     if (movie?.movieid) {
@@ -99,6 +100,7 @@ const Comments = ({
       dispatch(getComments(movie?.original_title, movie?.id, axiosPrivate));
     }
   }, [movie, comment?.insert]);
+
   return (
     <>
       <MuiModal
@@ -142,9 +144,12 @@ const Comments = ({
               ثبت کامنت
             </button>
           </form>
-          {items?.map((com,i) => (
+          {items?.map((com, i) => (
             <>
-              <article key={i} className="p-6 mb-4 text-base bg-white border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-md">
+              <article
+                key={i}
+                className="p-6 mb-4 text-base bg-white border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-md"
+              >
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center">
                     <p className="inline-flex items-center mr-3 text-sm text-gray-900 dark:text-white ml-2">
@@ -156,7 +161,9 @@ const Comments = ({
                       {com?.username}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <span>{timeago.format(com?.createdAt || "2022-10-25")}</span>
+                      <span>
+                        {timeago.format(com?.createdAt || "2022-10-25")}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -168,27 +175,13 @@ const Comments = ({
                     type="button"
                     className="flex  items-center text-sm text-gray-500 hover:underline dark:text-gray-400"
                   >
-                    <svg
-                      aria-hidden="true"
-                      className="mr-1 w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      ></path>
-                    </svg>
+                    <HiOutlineChatBubbleOvalLeftEllipsis size={20} />
                     پاسخ
                   </button>
                   <div className=" flex justify-between z-10 w-36 bg-white divide-y divide-gray-100 dark:bg-gray-700 dark:divide-gray-600">
                     <ul
                       className={`flex absolute translate-x-[-35%] left-1/2 py-1 text-sm text-gray-700 dark:text-gray-200 ${
-                        collaps && i===id ? "visible" : "invisible"
+                        collaps && i === id ? "visible" : "invisible"
                       }`}
                       aria-labelledby="dropdownMenuIconHorizontalButton"
                     >
@@ -222,15 +215,7 @@ const Comments = ({
                     className="inline-flex items-center p-2 text-sm font-medium text-center text-gray-400 bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
                     onClick={() => handleOption(i)}
                   >
-                    <svg
-                      className="w-5 h-5"
-                      aria-hidden="true"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                    </svg>
+                    <HiOutlineEllipsisHorizontal size={25} />
                   </button>
                 </div>
               </article>

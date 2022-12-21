@@ -11,9 +11,11 @@ import { Users } from "../../../typeing";
 import { Action } from "../../action/actionUsers";
 interface State {
   users: Users[] | null;
-  user:Users | null
-  insert:Users | null
-  count:number | null
+  user: Users[] | null;
+  insert: number;
+  count: number;
+  delete: number;
+  update: number;
   isloading: boolean;
   ErrorMessage: string | null;
 }
@@ -21,8 +23,10 @@ interface State {
 const initialState = {
   users: null,
   user:null,
-  insert:null,
-  count:null,
+  insert:0,
+  count:0,
+  update:0,
+  delete:0,
   isloading: false,
   ErrorMessage: null,
 };
@@ -55,13 +59,15 @@ const usersReducer = (state: State = initialState, action: Action) => {
       break;
     case UPDATEUSER:
       return {
-        users: action?.payload?.users,
+        update: action?.payload?.update,
         isloading: false,
       };
       break;
     case DELETEUSER:
       return {
         isloading: false,
+        update: action?.payload?.delete,
+
       };
       break;
     case FAILREQUESTUSER:

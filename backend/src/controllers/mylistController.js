@@ -2,6 +2,7 @@ import db from "../model/index.js";
 import { responce } from "../util/configResponce.js";
 import { validationResult } from "express-validator";
 import { Op } from "sequelize";
+import { paginate } from "../helper/paginate.js";
 export const mylistController = new (class MylistController {
   constructor() {}
 
@@ -45,7 +46,8 @@ export const mylistController = new (class MylistController {
       media_type: req.body.media_type ? req.body.media_type : null,
       movieid: req.body.id ? req.body.id : null,
     });
-
+console.log("mylist______________________________________")
+console.log(newList)
     responce({
       res,
       code: 200,
@@ -55,8 +57,17 @@ export const mylistController = new (class MylistController {
   }
   async getAllList(req, res) {
     const { id } = req.params;
-    console.log("getAllList---------------____________");
-    const mylist = await db.Mylist.findAll({ where: { userId: id } });
+    const pageSize = Number(req.query.pageSize);
+    const page = Number(req.query.page);
+
+   try {
+    const mylist = await db.Mylist.findAll(
+      paginate(
+        { where: { userId: id } },
+        {page,pageSize}
+      )
+      
+      );
     if (mylist.length<1) {
       return res.status(403).send("")
     }
@@ -66,12 +77,21 @@ export const mylistController = new (class MylistController {
       message: "ok",
       data: mylist,
     });
+   } catch (error) {
+    
+   }
   }
   async removeMovie(req, res) {
     const { userid,movieid } = req.query;
+    if (!userid || !movieid) {
+      responce({
+        res,
+        code: 400,
+        message: 'fail'
+      });
+    }
     console.log("USERID:"+userid+"MOVIEID:"+movieid);
-    const mylist = await db.Mylist.destroy({ where: {[Op.and]:[{userId:userid},{movieid:movieid}]} });
-    console.log(mylist)
+    const mylist = await db.Mylist.destroy({ where: {[Op.and]:[{userId:Number(userid)},{movieid:Number(movieid)}]} });
     responce({
       res,
       code: 200,

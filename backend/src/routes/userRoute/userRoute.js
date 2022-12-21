@@ -22,8 +22,6 @@ userRouter.put(
   upload.single("image"),
   (req, res, next) => {
     if (!req.file) {
-      console.log("--------------------------req.file")
-      console.log(req.file)
       req.body.image = null;
     } else {
       req.body.image = req.file.filename;

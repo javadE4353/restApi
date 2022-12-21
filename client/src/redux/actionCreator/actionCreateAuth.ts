@@ -18,11 +18,6 @@ type Payload = {
   payload: typePayload;
 };
 
-interface ResponseError {
-  status: number | null;
-  message: string | null ;
-}
-
 type DispatchType = (args: Payload) => Payload;
 const login =
   (username: string, password: string) => async (dispatch: DispatchType) => {

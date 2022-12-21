@@ -1,41 +1,79 @@
+
 import {
-  REQUESTMOVIE,
-  REQUESTSUCCESSMOVIE,
-  REQUESTFAILMOVIE,
+  REQUESTMOVIES,
+  REQUESTGETMOVIES,
+  REQUESTDELETEMOVIES,
+  REQUESTUPDATEMOVIES,
+  REQUESTINSERTMOVIE,
+  REQUESTFAILMOVIES,
+  REQUESTGETMOVIE,
 } from "../../types/types";
 
 import { Action } from "../../action/actionMovie";
-import {Movies} from "../../../typeing"
+import { Movies } from "../../../typeing";
 
 interface MovieType {
-  movie: Movies[];
+  movies: Movies[] | null;
+  movie: Movies | null;
+  insert: number;
+  update: number;
+  delete: number;
   isloading: boolean;
+  ErrorMessage:string | null
 }
 
 const initialState = {
-  movie: [],
+  movies: null,
+  movie: null,
+  insert: 0,
+  update: 0,
+  delete: 0,
   isloading: false,
+  ErrorMessage:null
 };
 
 const movieReducer = (state: MovieType = initialState, action: Action) => {
-  const { type, payload } = action;
+  const { type } = action;
 
   switch (type) {
-    case REQUESTMOVIE:
+    case REQUESTMOVIES:
       return {
-        movie: null,
         isloading: true,
       };
       break;
-    case REQUESTSUCCESSMOVIE:
+    case REQUESTGETMOVIES:
       return {
-        movie: payload,
-        isloading: true,
+        movies: action?.payload?.movies,
+        isloading: false,
       };
       break;
-    case REQUESTFAILMOVIE:
+    case REQUESTGETMOVIE:
       return {
-        movie: null,
+        movie: action?.payload?.movie,
+        isloading: false,
+      };
+      break;
+    case REQUESTDELETEMOVIES:
+      return {
+        delete: action?.payload?.delete,
+        isloading: false,
+      };
+      break;
+    case REQUESTUPDATEMOVIES:
+      return {
+        update: action?.payload?.update,
+        isloading: false,
+      };
+      break;
+    case REQUESTINSERTMOVIE:
+      return {
+        insert: action?.payload?.insert,
+        isloading: false,
+      };
+      break;
+    case REQUESTFAILMOVIES:
+      return {
+        ErrorMessage: action?.payload?.ErrorMessage,
         isloading: false,
       };
       break;

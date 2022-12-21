@@ -68,6 +68,9 @@ export const userModel = (sequelize, DataTypes) => {
       through: model.Transaction,
       foreignKey: { name: "userId", type: DataTypes.INTEGER },
     });
+    user.hasMany(model.Movies, {
+      foreignKey: { name: "userId", type: DataTypes.INTEGER },
+    });
     user.belongsToMany(model.Role, {
       through: model.RoleHasUser,
       foreignKey: {

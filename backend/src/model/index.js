@@ -14,6 +14,9 @@ import {ratings} from "./ratings.js"
 import { createRequire } from "module";
 import { transaction } from "./transaction.js";
 import { subscription } from "./subscription.js";
+import { movies } from "./Movies.js";
+import { category } from "./category.js";
+import { categoryHasMovies } from "./categoryHasMovies.js";
 const require = createRequire(import.meta.url);
 const env = process.env.NODE_ENV || "development";
 
@@ -47,7 +50,14 @@ if (config.use_env_variable) {
     config.database,
     config.username,
     config.password,
-    config
+    config,
+    {
+      define: {
+        charset: 'utf8',
+        collate: 'utf8_general_ci', 
+        timestamps: true
+      },
+    }
   );
 }
 
@@ -63,6 +73,9 @@ db.Review = review(sequelize, DataTypes);
 db.Ratings = ratings(sequelize, DataTypes);
 db.Transaction = transaction(sequelize, DataTypes);
 db.Subscription = subscription(sequelize, DataTypes);
+db.Movies = movies(sequelize, DataTypes);
+db.Category = category(sequelize, DataTypes);
+db.CategoryHasMovies = categoryHasMovies(sequelize, DataTypes);
 // associate
 Object.keys(db).forEach((models) => {
   if (db[models].associate) {

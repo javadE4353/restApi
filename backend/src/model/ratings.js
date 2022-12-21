@@ -24,6 +24,10 @@ export const ratings = (sequelize, DataTypes) => {
           type: DataTypes.INTEGER(),
           drfaultValue: null,
         },
+        userId:{
+          type: DataTypes.INTEGER(),
+          drfaultValue: null,
+        }
 
       },
       {

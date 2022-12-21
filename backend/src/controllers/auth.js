@@ -122,9 +122,10 @@ if (dublicateUsername !== null) {
     }
 
     fondUser = JSON.parse(JSON.stringify(fondUser));
-  
     //match password
     const match = await bcrypt.compare(password, fondUser.password);
+    console.log(match)
+
     if (!match) {
       return responce({
         res,

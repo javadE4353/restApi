@@ -15,13 +15,13 @@ type MoviesAction = {
 };
 type DispatchType = (args: MoviesAction) => MoviesAction;
 
-export const getAllmylist = (userid: number, axiosPrivate: AxiosInstance) => {
+export const getAllmylist = (userid: number,axiosPrivate: AxiosInstance,page=1,pageSize=5) => {
   // console.log(userid);
   return async (dispatch: DispatchType) => {
     dispatch({ type: REQUESTMYLIST,payload:null });
     try {
-      const response = await axiosPrivate.get(`${BASE_URL}/mylist/${userid}`);
-      // console.log(response);
+      const response = await axiosPrivate.get(`${BASE_URL}/mylist/${userid}?page=${page}&pageSize=${pageSize}`);
+      console.log(response);
       dispatch({
         type: REQUESTSECCESSMYLIST,
         payload: response?.data?.data,
@@ -56,8 +56,8 @@ export const insertmylist = (movie: Movies, axiosPrivate: AxiosInstance) => {
   };
 };
 export const removeMovieMylist = (
-  movieid: number,
   userid: number,
+  movieid: number,
   axiosPrivate: AxiosInstance
 ) => {
   return async (dispatch: DispatchType) => {
@@ -74,7 +74,7 @@ export const removeMovieMylist = (
       });
       if (response?.status === 200) {
         const response = await axiosPrivate.get(`${BASE_URL}/mylist/${userid}`);
-        // console.log(response);
+        console.log(response);
         dispatch({
           type: REQUESTSECCESSMYLIST,
           payload: response?.data?.data,

@@ -1,31 +1,41 @@
 import { useEffect, useState } from "react";
+
+//module external
 import { useDispatch, useSelector } from "react-redux";
 import { Dispatch } from "redux";
-import getMoviePopuler from "../redux/actionCreator/actionMovie";
+
+//
+import{ getmovies } from "../redux/actionCreator/actionMovie";
 import SliderItemHome from "../subcomponents/SliderItemHome";
 import { Movies } from "../typeing";
 
-interface MovieType {
-  movies: { movie: Movies[]; isloading: boolean };
-}
-interface Movie {
-  movie: MovieType;
+//interface
+interface MoviesType {
+movies:{ 
+  movies: Movies[] | null;
+  movie: Movies | null;
+  insert: number;
+  update: number;
+  delete: number;
   isloading: boolean;
+  ErrorMessage: string | null;}
 }
+
+//component
 const SliderHome: React.FC = () => {
   const [movie, setMovie] = useState<Movies | null>(null);
   const dispatch: Dispatch<any> = useDispatch();
-  const banner = useSelector((state: MovieType) => state?.movies.movie);
-  const banner1 = useSelector((state: MovieType) => state?.movies);
+  const banner = useSelector((state: MoviesType) => state?.movies.movies);
   useEffect(() => {
-    dispatch(getMoviePopuler());
+    dispatch(getmovies({}));
   }, []);
 
   useEffect(() => {
-    setMovie(banner?.[Math.floor(Math.random() * banner.length)]);
+     if(banner){
+      setMovie(banner?.[Math.floor(Math.random() * banner.length)]);
+     }
   }, [banner]);
 
-  // console.log(banner1);
   return (
     <>
       <SliderItemHome item={movie} />

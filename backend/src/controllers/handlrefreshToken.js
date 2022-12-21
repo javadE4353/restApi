@@ -19,6 +19,7 @@ const handleRefreshToken = async (req, res) => {
   const TokensRefresh = await db.Token.findOne({
     where: { name: refreshToken },
   });
+
   if (!TokensRefresh) {
     return res.status(400).send("There is no token refresh");
   }
@@ -49,6 +50,7 @@ const handleRefreshToken = async (req, res) => {
     console.log("null user---------------------------------------------------------------")
     return res.sendStatus(403);
   }
+
   jwt.verify(
     refreshToken,
     process.env.SECRET_KEY_REFRESH_TOKEN,

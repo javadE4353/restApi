@@ -7,7 +7,7 @@ interface requestRatings{
 }
 interface successRatings{
   type: "SUCCESSRATING";
-  payload: Ratings[];
+  payload:{ rating:Ratings[],status:number};
 }
 interface insertRatings {
   type: "INSERTRATING";

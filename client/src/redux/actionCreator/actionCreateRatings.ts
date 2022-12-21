@@ -5,35 +5,48 @@ import {
   INSERTRATING,
 } from "../types/types";
 import { BASE_URL } from "../../axios/configApi";
-import { Ratings } from "../../typeing";
+import { Movies, Ratings } from "../../typeing";
 import { AxiosInstance } from "axios";
 
 type Ratingdispatch = {
   type: string;
-  payload: Ratings[] | null;
+  payload:{rating:Ratings[]|null,status:number };
 };
 type DispatchType = (args: Ratingdispatch) => Ratingdispatch;
 
 export const getRatings = (movietitle:string,axiosPrivate: AxiosInstance) => {
   return async (dispatch: DispatchType) => {
-    dispatch({ type: REQUESTRATING ,payload:null});
+    dispatch({ type: REQUESTRATING ,payload:{rating:null,status:102}});
     try {
       const response = await axiosPrivate.get(`${BASE_URL}/ratings?movietitle=${movietitle}`);
-      // console.log(response?.data?.data);
-      dispatch({
-        type: SUCCESSRATING,
-        payload: response?.data?.data,
-      });
+      console.log(response?.data?.data);
+      if(response?.status ===200){
+        dispatch({
+          type: SUCCESSRATING,
+          payload: {rating:response?.data?.data,status:200},
+        });
+      }
     } catch (error) {
       dispatch({
         type: FAILDRATING,
-        payload:null
+        payload:{rating:null,status:0},
       });
     }
   };
 };
-export const insertRatings = (rated: Ratings,movietitle:string, axiosPrivate: AxiosInstance) => {
-  return async (dispatch: DispatchType) => {
+
+
+
+
+type RatingdispatchInsert = {
+  type: string;
+  payload:Ratings[]|null;
+};
+type DispatchTypeInsert = (args: RatingdispatchInsert) => RatingdispatchInsert;
+
+
+export const insertRatings = (rated: Ratings,data:Movies,movietitle:string,movieid:number,userid:number, axiosPrivate: AxiosInstance) => {
+  return async (dispatch: DispatchTypeInsert) => {
     dispatch({ type: REQUESTRATING ,payload:null});
 
     try {
@@ -44,7 +57,13 @@ export const insertRatings = (rated: Ratings,movietitle:string, axiosPrivate: Ax
         type: INSERTRATING,
         payload:null
       });
-      if(response?.status === 200){
+     if(response?.status === 200){
+
+      const res = await axiosPrivate.put(
+        `${BASE_URL}/movies?title=${movietitle}&movieid=${movieid}&username=${rated?.username}`,data
+      );
+
+      if(res?.status === 200 || res?.status === 200){
         const response = await axiosPrivate.get(`${BASE_URL}/ratings?movietitle=${movietitle}`);
       console.log(response?.data?.data);
       dispatch({
@@ -52,6 +71,7 @@ export const insertRatings = (rated: Ratings,movietitle:string, axiosPrivate: Ax
         payload: response?.data?.data,
       });
       }
+     }
     } catch (error) {
       // console.log(rated);
       dispatch({

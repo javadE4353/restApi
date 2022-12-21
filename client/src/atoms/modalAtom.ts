@@ -34,6 +34,10 @@ export const showAlert = atom({
   key: "showAlert",
   default: false,
 });
+export const pageinationAtom = atom({
+  key: "pageinationAtom",
+  default: 1,
+});
 
 export const movieState = atom<Movies | null | null>({
   key: "movieState",
