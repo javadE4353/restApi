@@ -455,7 +455,6 @@ if (req.file !== undefined && req.file !== null) {
       const pageSize = Number(req.query.pageSize);
       const page = Number(req.query.page);
       try {
-        console.log("moviecategoryfillter8 ____________________________________________________________________________________")
 
         const movies = await db.Movies.findAll(
           paginate(
