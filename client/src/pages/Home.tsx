@@ -8,9 +8,7 @@ import {
 
 //module external
 import { useDispatch, useSelector } from "react-redux";
-import { useRecoilState } from "recoil";
 import { Dispatch } from "redux";
-import { modalMylist, modalState } from "../atoms/modalAtom";
 import MuiModal from "@mui/material/Modal";
 import { motion } from "framer-motion";
 import { BsX } from "react-icons/bs";
@@ -32,7 +30,6 @@ import SliderHome from "../components/slider";
 import useAxiosPrivate from "../hook/useAxiosPrivate";
 import { getAllmylist } from "../redux/actionCreator/actionCreateMylist";
 import NavigationBottom from "../subcomponents/NavigationBottom";
-import { categoryMovies } from "../data/category";
 
 
 // interface
@@ -51,13 +48,13 @@ interface togglesidebar {
 }
 interface MoviesType {
   movies:{ 
-    movies: Movies[] | null;
-    movie: Movies | null;
+    movieAll: Movies[];
+    movie: Movies;
     insert: number;
     update: number;
     delete: number;
     isloading: boolean;
-    ErrorMessage: string | null;}
+    ErrorMessage: string ;}
   }
 interface Mylist {
   mylist: { mylist: Movies[]; isloading: boolean };
@@ -92,7 +89,7 @@ const Home: React.FC = () => {
   const accesstoken = useSelector(
     (state: StateAccessToken) => state?.accesstoken
   );
-  const movies = useSelector((state: MoviesType) => state?.movies?.movies);
+  const movies = useSelector((state: MoviesType) => state?.movies?.movieAll);
   const categorys = useSelector((state: Categorys) => state?.categorys?.categorys);
   const toggle = useSelector((state: togglesidebar) => state?.sidebar?.toggle);
   const axiosPrivate = useAxiosPrivate();

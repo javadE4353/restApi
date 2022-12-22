@@ -5,6 +5,7 @@ import {
   REQUESTUPDATEMOVIES,
   REQUESTINSERTMOVIE,
   REQUESTFAILMOVIES,
+  REQUESTGETALLMOVIE,
 } from "../types/types";
 import apiConfig, { axiospublic, BASE_URL } from "../../axios/configApi";
 import { Movies } from "../../typeing";
@@ -12,6 +13,7 @@ import { AxiosInstance } from "axios";
 
 interface Payload {
   movies: Movies[] | null;
+  Allmovie: Movies[] | null;
   insert: number;
   update: number;
   delete: number;
@@ -32,7 +34,7 @@ type MoviesAction = {
 };
 type DispatchType = (args: MoviesAction) => MoviesAction;
 
-export const getmovies = (option: Option) => {
+export const getmovies = (axiosPrivate: AxiosInstance, option: Option) => {
   let url = `${BASE_URL}/movies`;
   let baseUrl = ``;
   if (
@@ -43,18 +45,28 @@ export const getmovies = (option: Option) => {
     option?.username
   ) {
     baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}&category=${option?.category}&username=${option?.username}&all=${option.all}`;
-  } else if (
+  }
+   else if (
     option?.page &&
     option.pageSize &&
     option?.category &&
     option?.username
   ) {
-    baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}`;
-  } else if (option?.page && option.pageSize && option?.category) {
-    baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}`;
-  } else if (option?.category && option?.username) {
+    baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}&category=${option?.category}&username=${option?.username}`;
+  }
+
+   else if (option?.page && option.pageSize && option?.category) {
+    baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}&category=${option?.category}`;
+  }
+
+
+   else if (option?.page && option.pageSize && option?.username) {
+    baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}&username=${option?.username}`;
+  }
+   else if (option?.category && option?.username) {
     baseUrl = `${url}?category=${option?.category}&username=${option?.username}`;
-  } else if (option?.page && option.pageSize) {
+  }
+   else if (option?.page && option.pageSize) {
     baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}`;
   } else if (option?.page) {
     baseUrl = `${url}?page=${option?.page}&pageSize=${1000}`;
@@ -71,20 +83,37 @@ export const getmovies = (option: Option) => {
   ) {
     baseUrl = `${url}`;
   }
+  console.log(baseUrl)
   return async (dispatch: DispatchType) => {
     dispatch({ type: REQUESTMOVIES });
     try {
-      const response = await axiospublic.get(`${baseUrl}`);
+      const response = await axiosPrivate.get(`${baseUrl}`);
       dispatch({
         type: REQUESTGETMOVIES,
         payload: {
           movies: response?.data.data,
+          Allmovie: null,
           update: 0,
           insert: 0,
           delete: 0,
           ErrorMessage: null,
         },
       });
+
+      // if(response?.status === 200){
+      //   const res = await axiospublic.get(`${BASE_URL}/movies/allmovie`);
+      //   dispatch({
+      //     type: REQUESTGETALLMOVIE,
+      //     payload: {
+      //       Allmovie: res?.data?.data,
+      //       movies:response?.data.data,
+      //       update: 0,
+      //       insert: 0,
+      //       delete: 0,
+      //       ErrorMessage: null,
+      //     },
+      //   });
+      // }
       console.log(response?.data.data);
     } catch (error) {
       let ErrorMsg = "error";
@@ -92,6 +121,7 @@ export const getmovies = (option: Option) => {
         type: REQUESTFAILMOVIES,
         payload: {
           movies: null,
+          Allmovie:null,
           update: 0,
           insert: 0,
           delete: 0,
@@ -155,6 +185,53 @@ export const getmovie = (
     }
   };
 };
+// get Allmovie public
+
+interface PayloadgetAllmovie {
+  Allmovie: Movies[] | null;
+  insert: number;
+  update: number;
+  delete: number;
+  ErrorMessage: string | null;
+}
+
+type MovieActionAllmovie = {
+  type: string;
+  payload?: PayloadgetAllmovie;
+};
+type DispatchTypAllmovie = (args: MovieActionAllmovie) => MovieActionAllmovie;
+
+export const getAllmovie = () => {
+  return async (dispatch: DispatchTypAllmovie) => {
+    dispatch({ type: REQUESTMOVIES });
+    try {
+      const response = await axiospublic.get(`${BASE_URL}/movies/allmovie`);
+      dispatch({
+        type: REQUESTGETALLMOVIE,
+        payload: {
+          Allmovie: response?.data?.data,
+          update: 0,
+          insert: 0,
+          delete: 0,
+          ErrorMessage: null,
+        },
+      });
+      // console.log(response?.data?.data)
+    } catch (error) {
+      let ErrorMsg = "error";
+      dispatch({
+        type: REQUESTFAILMOVIES,
+        payload: {
+          Allmovie: null,
+          update: 0,
+          insert: 0,
+          delete: 0,
+          ErrorMessage: ErrorMsg,
+        },
+      });
+    }
+  };
+};
 
 // insert movie
 
@@ -177,7 +254,6 @@ export const insertmovie = (
   return async (dispatch: DispatchTypeinsert) => {
     dispatch({ type: REQUESTMOVIES });
     try {
-     console.log( data?.get("genre_ids"))
       const response = await axiosPrivate.post(
         `${BASE_URL}/movies?userid=${userid}`,
         data
@@ -201,6 +277,8 @@ export const insertmovie = (
 
 interface Payloaddelete {
   delete: number;
+  movies: Movies[] | null;
+  Allmovie: Movies[] | null;
   ErrorMessage: string | null;
 }
 
@@ -214,24 +292,61 @@ export const deletemovie = (
   axiosPrivate: AxiosInstance,
   title: string,
   movieid: number,
-  username: string
+  page: number,
+  pageSize: number
 ) => {
   return async (dispatch: DispatchTypedelete) => {
     dispatch({ type: REQUESTMOVIES });
     try {
       const response = await axiosPrivate.delete(
-        `${BASE_URL}/movies?title${title}&movieid${movieid}&username${username}`
+        `${BASE_URL}/movies?title=e${title}&movieid=${movieid}`
       );
+
       dispatch({
         type: REQUESTDELETEMOVIES,
-        payload: { delete: response?.data?.data[0], ErrorMessage: null },
+        payload: {
+          delete: response?.data?.data[0],
+          ErrorMessage: null,
+          movies: null,
+          Allmovie:null
+        },
       });
+      if (response?.status === 200) {
+        const res = await axiosPrivate.get(
+          `${BASE_URL}/movies?page=${page}&pageSize=${pageSize}`
+        );
+        dispatch({
+          type: REQUESTGETMOVIES,
+          payload: {
+            movies: res?.data.data,
+            Allmovie:null,
+            delete: 0,
+            ErrorMessage: null,
+          },
+        });
+        if(res?.status ===200){
+          const resp = await axiosPrivate.get(
+            `${BASE_URL}/movies/allmovie`
+          );
+          dispatch({
+            type: REQUESTGETMOVIES,
+            payload: {
+              Allmovie: resp?.data.data,
+              movies: res?.data.data,
+              delete: 0,
+              ErrorMessage: null,
+            },
+          });
+
+        }
+      }
+
       // console.log(response?.data?.data)
     } catch (error) {
       let ErrorMsg = "error";
       dispatch({
         type: REQUESTFAILMOVIES,
-        payload: { delete: 0, ErrorMessage: ErrorMsg },
+        payload: { delete: 0, movies: null,Allmovie:null, ErrorMessage: ErrorMsg },
       });
     }
   };

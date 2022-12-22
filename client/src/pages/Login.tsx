@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 import newAccessTokenAction from "../redux/actionCreator/actionCreateAccessToken";
 import loginAction from "../redux/actionCreator/actionCreateAuth";
 import { Movies, StateTypeAuth, Userinfo } from "../typeing";
-import { getmovies } from "../redux/actionCreator/actionMovie";
+import { getAllmovie, getmovies } from "../redux/actionCreator/actionMovie";
 
 //interface
 interface Inputs {
@@ -73,7 +73,7 @@ function Login() {
   }, [banner]);
 
   useEffect(() => {
-    dispatch(getmovies({}));
+    dispatch(getAllmovie());
   }, []);
 
   return (

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Dispatch } from "redux";
 
 //
-import{ getmovies } from "../redux/actionCreator/actionMovie";
+import{ getAllmovie, getmovies } from "../redux/actionCreator/actionMovie";
 import SliderItemHome from "../subcomponents/SliderItemHome";
 import { Movies } from "../typeing";
 
@@ -27,7 +27,7 @@ const SliderHome: React.FC = () => {
   const dispatch: Dispatch<any> = useDispatch();
   const banner = useSelector((state: MoviesType) => state?.movies.movies);
   useEffect(() => {
-    dispatch(getmovies({}));
+    dispatch(getAllmovie());
   }, []);
 
   useEffect(() => {

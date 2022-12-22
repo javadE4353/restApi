@@ -6,6 +6,7 @@ import {
   REQUESTUPDATEMOVIES,
   REQUESTINSERTMOVIE,
   REQUESTFAILMOVIES,
+  REQUESTGETALLMOVIE,
 } from "../types/types";
 import { Movies } from "../../typeing";
 
@@ -15,6 +16,10 @@ interface requestMovie {
 interface getmovies {
   type: "REQUESTGETMOVIES";
   payload:{ movies:Movies[]};
+}
+interface getAllmovie {
+  type: "REQUESTGETALLMOVIE";
+  payload:{ Allmovie:Movies[]};
 }
 interface getmovie {
   type: "REQUESTGETMOVIE";
@@ -37,4 +42,4 @@ interface failmovies {
   payload: {ErrorMessage:string | null};
 }
 
-export type Action = requestMovie | getmovies | getmovie | insertmovies|updatemovies|deletemovies|failmovies;
+export type Action = requestMovie | getmovies | getmovie | insertmovies|updatemovies|deletemovies|failmovies |getAllmovie;

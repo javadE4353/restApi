@@ -7,6 +7,7 @@ import {
   REQUESTINSERTMOVIE,
   REQUESTFAILMOVIES,
   REQUESTGETMOVIE,
+  REQUESTGETALLMOVIE
 } from "../../types/types";
 
 import { Action } from "../../action/actionMovie";
@@ -14,6 +15,7 @@ import { Movies } from "../../../typeing";
 
 interface MovieType {
   movies: Movies[] | null;
+  Allmovie: Movies[] | null;
   movie: Movies | null;
   insert: number;
   update: number;
@@ -25,6 +27,7 @@ interface MovieType {
 const initialState = {
   movies: null,
   movie: null,
+  Allmovie:null,
   insert: 0,
   update: 0,
   delete: 0,
@@ -44,6 +47,12 @@ const movieReducer = (state: MovieType = initialState, action: Action) => {
     case REQUESTGETMOVIES:
       return {
         movies: action?.payload?.movies,
+        isloading: false,
+      };
+      break;
+    case REQUESTGETALLMOVIE:
+      return {
+        Allmovie: action?.payload?.Allmovie,
         isloading: false,
       };
       break;

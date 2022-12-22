@@ -5,8 +5,10 @@ import { motion } from "framer-motion";
 import { useRecoilState } from "recoil";
 import { Dispatch } from "redux";
 import * as timeago from "timeago.js/lib/index";
-import { HiPencil } from "react-icons/hi2";
+import { HiPencil, HiMinus, HiPlus } from "react-icons/hi2";
 import { useSelector, useDispatch } from "react-redux";
+import { BsX } from "react-icons/bs";
+
 import {
   HiTrash,
   HiMagnifyingGlass,
@@ -15,9 +17,7 @@ import {
 } from "react-icons/hi2";
 
 //
-import {
-  pageinationAtom,
-} from "../atoms/modalAtom";
+import { pageinationAtom } from "../atoms/modalAtom";
 
 import useAxiosPrivate from "../hook/useAxiosPrivate";
 
@@ -28,6 +28,8 @@ import { tableMovies } from "../data/dataTableMovies";
 import { Link, useNavigate } from "react-router-dom";
 import apiConfig, { axiospublic, BASE_URL } from "../axios/configApi";
 import axios from "axios";
+import getmovies, { deletemovie } from "../redux/actionCreator/actionMovie";
+import { filterRow } from "../data/filter";
 
 //interface
 interface State {
@@ -40,8 +42,8 @@ interface State {
 }
 interface MoviesType {
   movies: {
-    movies: Movies[] | null;
-    movie: Movies | null;
+    movies: Movies[];
+    movie: Movies;
     insert: number;
     update: number;
     delete: number;
@@ -65,10 +67,24 @@ interface Categorys {
     ErrorMassege: string | null;
   };
 }
+interface User {
+  username: string;
+  id: number;
+}
+
 const TableMovies = () => {
   const [pageinationatom, setPageinationAtom] = useRecoilState(pageinationAtom);
   const navigate = useNavigate();
   const [count, setCount] = useState<number>(1);
+  const [filterusername, setfilterusrname] = useState<User[]>([]);
+  const [filterow, setfilterRow] = useState<any>(3);
+  const [filterCategory, setfilterCategory] = useState<any>();
+  const [filterfilterUser, setfilterUser] = useState<any>("");
+  const [showFilterCategory, setShowFilterCategory] = useState<boolean>(false);
+  const [showFilterRow, setShowFilterRow] = useState<boolean>(false);
+  const [showFilterUser, setShowFilterUser] = useState<boolean>(false);
+  const [toggleSidebarFilterM, setToggleSidebarFilterM] =
+    useState<boolean>(false);
   const dispatch: Dispatch<any> = useDispatch();
   const movies = useSelector((state: MoviesType) => state?.movies?.movies);
   const categorys = useSelector(
@@ -76,26 +92,46 @@ const TableMovies = () => {
   );
   const axiosPrivate = useAxiosPrivate();
 
-  const getUserFatch = useCallback(() => {}, []);
+  const countMovie = async () => {
+    try {
+      const res = await axiospublic.get(`${BASE_URL}/movies/count`);
+      if (res.status == 200) {
+        setCount(res.data?.data.count);
+        setfilterusrname(res.data?.data.username);
+      }
+    } catch (error) {}
+  };
+
 
   useEffect(() => {
-    const countMovie = async () => {
-      try {
-        const res = await axios.get(
-          `${BASE_URL}/movies/count`
-        );
-        console.log(res)
-        if (res.status == 2000) {
-          setCount(res.data?.data);
-        }
-      } catch (error) {}
-    };
-    countMovie();
+    setPageinationAtom(1);
   }, []);
 
-  const handleDeleteUser = (id: number) => {
-    dispatch(deleteUser(axiosPrivate, id, pageinationatom, 3));
+
+const handleShowAllMovie=()=>{
+  countMovie()
+  dispatch( getmovies(axiosPrivate, {}));
+}
+
+  const handleDeleteUser = (id: number, title: string) => {
+    dispatch(deletemovie(axiosPrivate, title, id, pageinationatom, filterow));
+    countMovie();
   };
+
+  const handleFilter = (id: number, title: string) => {
+    setCount(filterow)
+    dispatch(
+      getmovies(axiosPrivate, {
+        page: pageinationatom,
+        pageSize: filterow,
+        username: filterfilterUser,
+        category: filterCategory,
+      })
+    );
+  };
+
+
+
   const showModalEdit = (id: number) => {
     navigate(`/dashboard/editmovie/:${id}`);
   };
@@ -118,6 +154,24 @@ const TableMovies = () => {
               <HiOutlineUserPlus size={20} />
             </Link>
           </div>
+          <div>
+            <button
+              onClick={() => setToggleSidebarFilterM(!toggleSidebarFilterM)}
+              className="inline-flex items-center text-white bg-white border border-gray-300 bg-red-600 focus:outline-none hover:bg-red-400 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 lg:hidden"
+            >
+              فیلتر
+              <HiOutlineUserPlus size={20} />
+            </button>
+          </div>
+          <div>
+            <button
+              onClick={() => handleShowAllMovie()}
+              className="inline-flex items-center text-white bg-white border border-gray-300 bg-red-600 focus:outline-none hover:bg-red-400 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 "
+            >
+               نمایش پیش فرض
+              <HiOutlineUserPlus size={20} />
+            </button>
+          </div>
           <label form="table-search" className="sr-only">
             جستجو
           </label>
@@ -132,6 +186,394 @@ const TableMovies = () => {
               placeholder="جستجو"
             />
           </div>
+
+          <div className="bg-white">
+            <div>
+              {/* <!--
+      Mobile filter dialog
+
+    --> */}
+              <div
+                className={`relative z-40 lg:hidden ${
+                  toggleSidebarFilterM ? "block" : "hidden"
+                }`}
+                aria-modal="true"
+              >
+                <div className="fixed inset-0 bg-black bg-opacity-25"></div>
+
+                <div className="fixed inset-0 z-40 flex">
+                  <div className="relative ml-auto flex h-full w-full max-w-xs flex-col overflow-y-auto bg-white py-4 pb-12 shadow-xl">
+                    <div className="flex items-center justify-between px-4">
+                      <h2 className="text-lg font-medium text-gray-900">
+                        Filters
+                      </h2>
+                      <button
+                        type="button"
+                        className="-mr-2 flex h-10 w-10 items-center justify-center rounded-md bg-white p-2 text-gray-400"
+                        onClick={() =>
+                          setToggleSidebarFilterM(!toggleSidebarFilterM)
+                        }
+                      >
+                        <span className="sr-only">Close menu</span>
+                        {/* <!-- Heroicon name: outline/x-mark --> */}
+                        <BsX />
+                      </button>
+                    </div>
+
+                    {/* <!-- Filters --> */}
+                    <form className="mt-4 border-t border-gray-200">
+                      <h3 className="sr-only">فیلتر</h3>
+
+                      <div className="border-t border-gray-200 px-4 py-6">
+                        <h3 className="-mx-2 -my-3 flow-root">
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between bg-white px-2 py-3 text-gray-400 hover:text-gray-500"
+                            aria-controls="filter-section-mobile-0"
+                            aria-expanded="false"
+                          >
+                            <span
+                              className="font-medium text-gray-900"
+                              onClick={() =>
+                                setShowFilterCategory(!showFilterCategory)
+                              }
+                            >
+                              دسته بندی
+                            </span>
+                            <span className="ml-6 flex items-center">
+                              {showFilterCategory ? <HiMinus /> : <HiPlus />}
+                            </span>
+                          </button>
+                        </h3>
+
+                        <div
+                          className={`pt-6" id="filter-section-mobile-0 ${
+                            showFilterCategory ? "block" : "hidden"
+                          }`}
+                        >
+                          <div className="space-y-6">
+                            {categorys?.map((item, i) => (
+                              <div key={i} className="flex items-center">
+                                <input
+                                  id="filter-color-0"
+                                  name="category"
+                                  value={item.bits}
+                                  type="radio"
+                                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                  onChange={(
+                                    event: React.ChangeEvent<
+                                      | HTMLInputElement
+                                      | HTMLTextAreaElement
+                                      | HTMLSelectElement
+                                    >
+                                  ) => setfilterCategory(event.target.value)}
+                                />
+                                <label
+                                  form="filter-color-0"
+                                  className="ml-3 min-w-0 flex-1 text-gray-500"
+                                >
+                                  {item.title}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-200 px-4 py-6">
+                        <h3 className="-mx-2 -my-3 flow-root">
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between bg-white px-2 py-3 text-gray-400 hover:text-gray-500"
+                            aria-controls="filter-section-mobile-1"
+                            aria-expanded="false"
+                          >
+                            <span
+                              className="font-medium text-gray-900"
+                              onClick={() => setShowFilterRow(!showFilterRow)}
+                            >
+                              فیلتر سطر
+                            </span>
+                            <span className="ml-6 flex items-center">
+                              {showFilterRow ? <HiMinus /> : <HiPlus />}
+                            </span>
+                          </button>
+                        </h3>
+                        <div
+                          className={`pt-6" id="filter-section-mobile-0 ${
+                            showFilterRow ? "block" : "hidden"
+                          }`}
+                        >
+                          <div className="space-y-6">
+                            {filterRow?.map((item, i) => (
+                              <div key={i} className="flex items-center">
+                                <input
+                                  name="filter"
+                                  value={item.title}
+                                  type="radio"
+                                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                  onChange={(
+                                    event: React.ChangeEvent<
+                                      | HTMLInputElement
+                                      | HTMLTextAreaElement
+                                      | HTMLSelectElement
+                                    >
+                                  ) => setfilterRow(event.target.value)}
+                                />
+                                <label
+                                  form="filter-category-0"
+                                  className="ml-3 min-w-0 flex-1 text-gray-500"
+                                >
+                                  {item.value}{" "}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-200 px-4 py-6">
+                        <h3 className="-mx-2 -my-3 flow-root">
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between bg-white px-2 py-3 text-gray-400 hover:text-gray-500"
+                            aria-controls="filter-section-mobile-2"
+                            aria-expanded="false"
+                          >
+                            <span
+                              className="font-medium text-gray-900"
+                              onClick={() => setShowFilterUser(!showFilterUser)}
+                            >
+                              ایجادکننده
+                            </span>
+                            <span className="ml-6 flex items-center">
+                              {showFilterUser ? <HiMinus /> : <HiPlus />}
+                            </span>
+                          </button>
+                        </h3>
+                        <div
+                          className={`pt-6" id="filter-section-mobile-0 ${
+                            showFilterUser ? "block" : "hidden"
+                          }`}
+                        >
+                          <div className="space-y-6">
+                            {filterusername?.map((item, i) => (
+                              <>
+                                {filterusername?.[i - 1]?.username !=
+                                  item?.username &&
+                                filterusername?.[i - 1]?.id != item?.id ? (
+                                  <div key={i} className="flex items-center">
+                                    <input
+                                      id="filter-size-0"
+                                      name="row"
+                                      value={item.username}
+                                      type="radio"
+                                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                      onChange={(
+                                        event: React.ChangeEvent<
+                                          | HTMLInputElement
+                                          | HTMLTextAreaElement
+                                          | HTMLSelectElement
+                                        >
+                                      ) => setfilterUser(event.target.value)}
+                                    />
+                                    <label
+                                      form="filter-size-0"
+                                      className="ml-3 min-w-0 flex-1 text-gray-500"
+                                    >
+                                      {item?.username}
+                                    </label>
+                                  </div>
+                                ) : null}
+                              </>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <main className="mx-auto">
+                <section aria-labelledby="products-heading" className="">
+                  <h2 id="products-heading" className="sr-only">
+                    Products
+                  </h2>
+
+                  <div className="">
+                    <form className=" hidden lg:flex">
+                      <div className="reletive border-b border-gray-200 py-6">
+                        <h3 className="-my-3 flow-root">
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between bg-white py-3 text-sm text-gray-400 hover:text-gray-500"
+                            aria-controls="filter-section-0"
+                            aria-expanded="false"
+                          >
+                            <span
+                              className="font-medium text-gray-900"
+                              onClick={() =>
+                                setShowFilterCategory(!showFilterCategory)
+                              }
+                            >
+                              دسته بندی
+                            </span>
+                            <span className="ml-6 flex items-center">
+                              {showFilterCategory ? <HiPlus /> : <HiMinus />}
+                            </span>
+                          </button>
+                        </h3>
+                        <div
+                          className={` absolute bg-white pt-6 px-3 ${
+                            showFilterCategory ? "block" : "hidden"
+                          }`}
+                        >
+                          <div className="space-y-4">
+                            {categorys?.map((item, i) => (
+                              <div key={i} className="flex items-center">
+                                <input
+                                  id="filter-color-0"
+                                  name="category"
+                                  value={item.bits}
+                                  type="radio"
+                                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                  onChange={(
+                                    event: React.ChangeEvent<
+                                      | HTMLInputElement
+                                      | HTMLTextAreaElement
+                                      | HTMLSelectElement
+                                    >
+                                  ) => setfilterCategory(event?.target.value)}
+                                />
+                                <label
+                                  form="filter-color-0"
+                                  className="ml-3 text-sm text-gray-600"
+                                >
+                                  {item.title}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="reletive border-b border-gray-200 py-6">
+                        <h3 className="-my-3 flow-root">
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between bg-white py-3 text-sm text-gray-400 hover:text-gray-500"
+                            aria-controls="filter-section-1"
+                            aria-expanded="false"
+                          >
+                            <span
+                              className="font-medium text-gray-900"
+                              onClick={() => setShowFilterRow(!showFilterRow)}
+                            >
+                              فیلتر سطر
+                            </span>
+                            <span className="ml-6 flex items-center">
+                              {showFilterRow ? <HiMinus /> : <HiPlus />}
+                            </span>
+                          </button>
+                        </h3>
+                        <div
+                          className={` absolute bg-white pt-6 px-3 ${
+                            showFilterRow ? "block" : "hidden"
+                          }`}
+                        >
+                          <div className="space-y-4">
+                            {filterRow?.map((item, i) => (
+                              <div key={i} className="flex items-center">
+                                <input
+                                  name="filter"
+                                  value={item.title}
+                                  type="radio"
+                                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                  onChange={(
+                                    event: React.ChangeEvent<
+                                      | HTMLInputElement
+                                      | HTMLTextAreaElement
+                                      | HTMLSelectElement
+                                    >
+                                  ) => setfilterRow(event?.target.value)}
+                                />
+                                <label
+                                  form="filter-category-0"
+                                  className="ml-3 text-sm text-gray-600"
+                                >
+                                  {item.value}{" "}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="reletive border-b border-gray-200 py-6">
+                        <h3 className="-my-3 flow-root">
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between bg-white py-3 text-sm text-gray-400 hover:text-gray-500"
+                            aria-controls="filter-section-2"
+                            aria-expanded="false"
+                          >
+                            <span
+                              className="font-medium text-gray-900"
+                              onClick={() => setShowFilterUser(!showFilterUser)}
+                            >
+                              ایجاد کننده
+                            </span>
+                            <span className="ml-6 flex items-center">
+                              {showFilterUser ? <HiMinus /> : <HiPlus />}
+                            </span>
+                          </button>
+                        </h3>
+                        <div
+                          className={` absolute bg-white pt-6 px-3 ${
+                            showFilterUser ? "block" : "hidden"
+                          }`}
+                        >
+                          <div className="space-y-4 h-20 ">
+                            {filterusername?.map((item, i) => (
+                              <>
+                                {filterusername?.[i - 1]?.username !=
+                                  item?.username &&
+                                filterusername?.[i - 1]?.id != item?.id ? (
+                                  <div key={i} className="flex items-center">
+                                    <input
+                                      id="filter-size-0"
+                                      name="row"
+                                      value={item.username}
+                                      type="radio"
+                                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                      onChange={(
+                                        event: React.ChangeEvent<
+                                          | HTMLInputElement
+                                          | HTMLTextAreaElement
+                                          | HTMLSelectElement
+                                        >
+                                      ) => setfilterUser(event?.target.value)}
+                                    />
+                                    <label
+                                      form="filter-size-0"
+                                      className="ml-3 text-sm text-gray-600"
+                                    >
+                                      {item?.username}
+                                    </label>
+                                  </div>
+                                ) : null}
+                              </>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </section>
+              </main>
+            </div>
+          </div>
         </div>
         <div className="p-8 h-[100%] bg-white rounded-md">
           <table className="rounded-sm border-collapse border border-slate-400 table-auto w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -140,12 +582,12 @@ const TableMovies = () => {
                 <th scope="col" className="border border-slate-300 p-4">
                   <div className="flex items-center">
                     <input
-                      id="checkbox-all-search"
-                      type="checkbox"
+                      id="radio-all-search"
+                      type="radio"
                       className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                     />
-                    <label form="checkbox-all-search" className="sr-only">
-                      checkbox
+                    <label form="radio-all-search" className="sr-only">
+                      radio
                     </label>
                   </div>
                 </th>
@@ -236,7 +678,7 @@ const TableMovies = () => {
                       </button>
                       <button
                         className="text-white border border-red-100 bg-red-600 hover:bg-red-400 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-l-sm  text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                        onClick={() => handleDeleteUser(item?.id)}
+                        onClick={() => handleDeleteUser(item?.id, item?.title)}
                       >
                         <HiTrash size={20} />
                       </button>
@@ -248,7 +690,7 @@ const TableMovies = () => {
           </table>
           <div className="w-full flex justify-center items-center">
             <div className="w-[20%] flex justify-around items-center mt-4">
-              <Pageination page={count} moving={1} separate={3} />
+              <Pageination page={count} moving={1} separate={filterow} />
             </div>
           </div>
         </div>

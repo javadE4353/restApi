@@ -1,3 +1,6 @@
+import {useEffect,useState} from "react"
+
+
 //module external
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -37,8 +40,8 @@ interface Mylist {
   mylist: { mylist: Movies[] };
 }
 interface MoviesType {
-  movies: Movies[] | null;
-  movie: Movies | null;
+  movie: Movies[] | null;
+  Allmovie: Movies[] | null;
   insert: number;
   update: number;
   delete: number;
@@ -54,7 +57,7 @@ interface Cat{
 
 interface Categorys {
  categorys:{
-  categorys: Cat[] | null;
+  categorys: Cat[];
   update:number
   delete:number
   insert:number
@@ -63,7 +66,11 @@ interface Categorys {
  }
 }
 const ConfigPages = () => {
-  const movies = useSelector((state: MoviesType) => state?.movies);
+
+  const [comedy,setComedy]=useState<number>(0)
+  const [action,setAction]=useState<number>(0)
+
+  const movies = useSelector((state: MoviesType) => state?.Allmovie);
   const mylist = useSelector((state: Mylist) => state?.mylist.mylist);
   const categorys = useSelector((state: Categorys) => state?.categorys?.categorys);
 
@@ -72,23 +79,31 @@ const ConfigPages = () => {
     User: "user",
     Admin: "admin",
   };
+
+  useEffect(() => {
+    categorys?.map((item)=>{
+     if( item.bits == 28)setComedy(item.bits);
+     if( item.bits == 80)setComedy(item.bits);
+    })
+  }, [])
+  
   return (
     <AnimatePresence exitBeforeEnter>
       <Routes location={location} key={location.pathname}>
         {/* Route default */}
-        <Route path="/" element={<Home />}>
         <Route path="/login" element={<Login />}></Route>
         <Route path="/register" element={<Register />}></Route>
+        <Route path="/" element={<Home />}>
           <Route path="movie" element={<Modal />} />
         </Route>
         <Route path="/unauthorized" element={<Unauthorized />}></Route>
         <Route
           path="/comedy"
-          element={<Category movie={movies} gener={categoryMovies?.comady}/>}
+          element={<Category movie={movies} gener={comedy}/>}
         ></Route>
         <Route
           path="/action"
-          element={<Category movie={movies} gener={categoryMovies?.action}/>}
+          element={<Category movie={movies} gener={action}/>}
         ></Route>
         {/* Role Admin */}
         <Route element={<RequiredAuth allowedRoles={[ROLES.Admin]} />}>

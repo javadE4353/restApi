@@ -110,7 +110,7 @@ const InsertMovie = () => {
     formData.append("original_title", data.original_title);
     formData.append("overview", data.overview);
     formData.append("popularity", data.popularity);
-    formData.append("poster_path", data.poster_path[0]);
+    // formData.append("poster_path", data.poster_path[0]);
     formData.append("release_date", data.release_date);
     formData.append("title", data.title);
     formData.append("video", data.video);
@@ -118,6 +118,7 @@ const InsertMovie = () => {
     formData.append("vote_count", data.vote_count);
     formData.append("media_type", data.media_type);
     formData.append("movieid", data.movieid);
+    if(data.movieid == "") formData.delete("movieid")
     if(user?.userInfo?.id){
       dispatch(insertmovie(axiosPrivate, formData,user?.userInfo?.id));
     }
@@ -312,6 +313,27 @@ const InsertMovie = () => {
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-primary-500 dark:focus:border-primary-500"
                       placeholder=""
                       {...register("popularity", {
+                        required: true,
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      form=""
+                      className="block mb-2 text-sm font-medium text-black dark:text-black"
+                    >
+                      {errors.movieid && (
+                        <p className="text-sm  text-orange-500">
+                            آیدی فیلم 
+                        </p>
+                      )}
+                       آیدی فیلم
+                    </label>
+                    <input
+                      type="number"
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      placeholder=""
+                      {...register("movieid", {
                         required: true,
                       })}
                     />
