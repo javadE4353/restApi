@@ -25,13 +25,18 @@ interface Props{
 const Dashboard = ({path}:Props) => {
   const navigate=useNavigate()
   const [Sidebar, setSidebar] = useRecoilState(modalSidebarAdmin);
-
+const loc=useLocation()
   useEffect(()=>{
-    // navigate(`/dashboard/profile`)
+
+    if(loc.pathname == "/dashboard" && path == "admin")
+    navigate(`/dashboard/profile`)
+    else if(loc.pathname == "/dashboard/me" && path == "user")
+    navigate(`/dashboard/me/profile`)
+
   },[])
   return (
     <section>
-      <div className="flex">
+      <div className="flex overflow-hidden overflow-x-auto">
         <div
           className={`transition-all ${
             Sidebar ? "grow-0 shrink" : "grow-0 shrink	"

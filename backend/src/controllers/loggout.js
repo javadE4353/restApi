@@ -8,29 +8,25 @@ const { Op } = require("sequelize");
 
 const handleLogout = async (req, res) => {
     const cookies = req.cookies;
-  
     if (!cookies?.jwt) return res.status(204);
-  
+
     const refreshToken = cookies.jwt;
     const foundUser = await db.Token.findOne({ where:{name:refreshToken} })
+    
     if (!foundUser) {
       res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
       return res.sendStatus(204);
     }
-  
-    // foundUser.refreshToken = foundUser.refreshToken.filter(
-    //   (rt) => rt !== refreshToken
-    // );
-    // await foundUser.save();
-    jwt.verify(refreshToken,process.env.REFRESH_TOKEN_SECRET,async(err,decoded)=>{
+
+    jwt.verify(refreshToken,process.env.SECRET_KEY_REFRESH_TOKEN,async(err,decoded)=>{
      if (err) {
-        return res.status(401)
+      console.log(err)
+        return res.status(403)
      }
-     const{username}=decoded.userInfo
+     const username=decoded.username
      const user= await db.user.findOne({where:{username:username}})
      await db.Token.destroy({where:{[Op.and]:[{UserId:user.id},{name:refreshToken}]}})
     })
-  
     res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
     return res.sendStatus(204);
   };

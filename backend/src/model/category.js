@@ -19,16 +19,24 @@ export const category = (sequelize, DataTypes) => {
       },
       image: {
         type: DataTypes.STRING,
-        allowNull: false,
+        defaultValue: null,
       },
       content: {
         type: DataTypes.STRING,
+        defaultValue: null,
+      },
+      username: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      userid: {
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
     },
     {
       freezeTableName: true,
-      timestamps:true,
+      timestamps: true,
     }
   );
 

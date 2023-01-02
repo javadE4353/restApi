@@ -12,7 +12,7 @@ export const verifyToken = (req, res, next) => {
       return res.sendStatus(403);
     }
     req.user = decoded.userInfo.username;
-    req.role = decoded.userInfo.roles;
+    req.role = decoded.userInfo.role;
     next();
   });
 };

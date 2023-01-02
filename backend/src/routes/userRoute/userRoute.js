@@ -9,6 +9,7 @@ import {
   getAllUser,
   createUser,
   getUserStats,
+  getCountUsersByRole,
 } from "../../controllers/user.js";
 import verifyRoles from "../../middleware/verifyRole.js";
 
@@ -56,8 +57,17 @@ userRouter.delete(
 // //GET USER
 userRouter.get("/find/:id", getUser);
 
+//countUserByRole
+userRouter.get("/count",
+verifyToken,
+verifyRoles(db.ROLES),
+ getCountUsersByRole);
+
 // //GET ALL USER
-userRouter.get("/", getAllUser);
+userRouter.get("/",
+verifyToken,
+verifyRoles(db.ROLES),
+ getAllUser);
 
 // //GET USER STATS
 

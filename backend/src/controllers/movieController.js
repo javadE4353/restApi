@@ -2,6 +2,8 @@ import { validationResult } from "express-validator";
 import db from "../model/index.js";
 import { responce } from "../util/configResponce.js";
 import { paginate } from "../helper/paginate.js";
+import sequelize from "sequelize";
+import { Op } from "sequelize";
 
 export const movieController = new (class MovieController {
   constructor() {}
@@ -18,14 +20,14 @@ export const movieController = new (class MovieController {
     //     data: error.array(),
     //   });
     // }
-const dataimg = {};
-if (req.file !== undefined && req.file !== null) {
-  dataimg.backdrop_path = req.file.path.replace(/\\/g, "/").substring(6);
-  req.body.backdrop_path = `http://localhost:7000/${dataimg.backdrop_path}`;
-  console.log("not null");
-} else {
-  req.body.backdrop_path = null;
-}
+    const dataimg = {};
+    if (req.file !== undefined && req.file !== null) {
+      dataimg.backdrop_path = req.file.path.replace(/\\/g, "/").substring(6);
+      req.body.backdrop_path = `http://localhost:7000/${dataimg.backdrop_path}`;
+      console.log("not null");
+    } else {
+      req.body.backdrop_path = null;
+    }
     const data = {
       adult: Boolean(req.body?.adult),
       genre_ids: JSON.stringify([Number(req.body?.genre_ids)]),
@@ -43,7 +45,7 @@ if (req.file !== undefined && req.file !== null) {
       return responce({
         res,
         code: 400,
-        message: "error",
+        message: "Blocked request (userid: undefined)",
       });
     }
 
@@ -89,9 +91,6 @@ if (req.file !== undefined && req.file !== null) {
       categoryId: cat[0].id,
       movieId: newMovie.toJSON().id,
     });
-    console.log(newMovie);
-    console.log(cat[0].id);
-    console.log("cat----------------------------------------------------");
     return responce({
       res,
       code: 201,
@@ -105,9 +104,9 @@ if (req.file !== undefined && req.file !== null) {
     if (movieid) {
       try {
         const upMovie = await db.Movies.destroy({
-          where: { id: movieid },
+          where: { id: Number(movieid) },
         });
-        console.log(upMovie)
+        console.log(upMovie);
         return responce({
           res,
           code: 200,
@@ -126,36 +125,105 @@ if (req.file !== undefined && req.file !== null) {
     }
   }
   async getAllmovies(req, res) {
-    
-      try {
-        const Movie = await db.Movies.findAll({});
-        return responce({
-          res,
-          code: 200,
-          message: `ok`,
-          data: Movie,
-        });
-      } catch (error) {
-        console.log(error);
-        return responce({
-          res,
-          code: 400,
-          message: "error",
-          data: error,
-        });
-      }
+    try {
+      const Movie = await db.Movies.findAll();
+      // console.log(Movie)
+      return responce({
+        res,
+        code: 200,
+        message: `ok`,
+        data: Movie,
+      });
+    } catch (error) {
+      return responce({
+        res,
+        code: 400,
+        message: "error",
+        data: error,
+      });
+    }
   }
 
   async updateMovie(req, res) {
-    const { username, movieid, movietitle } = req.query;
-    if (movieid) {
+    const { userid, movieid, movietitle } = req.query;
+    if (!movieid ) {
+      return responce({
+        res,
+        code: 400,
+        message: `badrequest`,
+      });
+    }
+    if (!userid) {
+      return responce({
+        res,
+        code: 400,
+        message: `badrequest`,
+      });
+    }
+
+    const user = await db.user.findOne({ where: { id: Number(userid) } });
+    if (!user) {
+      return responce({
+        res,
+        code: 400,
+        message: `badrequest`,
+      });
+    }
+    if (req.body?.genre_ids && movieid) {
+      try {
+        const data = {
+          ...req.body,
+          genre_ids: JSON.stringify([Number(req.body?.genre_ids)]),
+          username: user.toJSON().username,
+          userid: user.toJSON().id,
+          roleuser: user.toJSON().roleuser,
+        };
+        let cat = await db.Category.findAll({
+          attributes: ["id"],
+          where: { bits: Number(req.body?.genre_ids) },
+        });
+        cat = JSON.parse(JSON.stringify(cat));
+        if (!cat && cat?.length < 1) {
+          return responce({
+            res,
+            code: 400,
+            message: `error`,
+          });
+        }
+        const upMovie = await db.Movies.update(data, {
+          where: { id: movieid },
+        });
+        await db.CategoryHasMovies.update(
+          {
+            categoryId: cat[0].id,
+            movieId: Number(movieid),
+          },
+          { where: { movieId: Number(movieid) } }
+        );
+        return responce({
+          res,
+          code: 200,
+          message: `ok : update movie${movieid}`,
+          // data: upMovie,
+        });
+      } catch (error) {
+        // console.log(error);
+        return responce({
+          res,
+          code: 500,
+          message: `error`,
+        });
+      }
+    } else {
       const data = {
         ...req.body,
-        genre_ids: JSON.stringify(req.body?.genre_ids),
+        username: user.toJSON().username,
+        userid: user.toJSON().id,
+        roleuser: user.toJSON().roleuser,
       };
       try {
         const upMovie = await db.Movies.update(data, {
-          where: { id: movieid },
+          where: { id: Number(movieid) },
         });
         return responce({
           res,
@@ -164,10 +232,10 @@ if (req.file !== undefined && req.file !== null) {
           data: upMovie,
         });
       } catch (error) {
-        console.log(error);
+        // console.log(error);
         return responce({
           res,
-          code: 400,
+          code: 500,
           message: "error",
           data: error,
         });
@@ -177,16 +245,30 @@ if (req.file !== undefined && req.file !== null) {
 
   async getCountMovie(req, res) {
     try {
-      const contMov = await db.Movies.count();
-      const movieusername = await db.Movies.findAll({attributes:["username","id"]});
-      console.log(contMov);
+      const movieusername = await db.Movies.findAll({
+        attributes: ["username", "id"],
+      });
+
+      let user = [];
+      if (movieusername) {
+        let arr = null;
+        movieusername?.map((item, i) => {
+          arr = new Set();
+          arr.add(item.username);
+        });
+        arr.forEach((element) => {
+          user.push(element);
+        });
+      }
+      console.log(user);
       return responce({
         res,
         code: 200,
         message: "ok",
-        data: {count:contMov,username:movieusername},
+        data: user,
       });
     } catch (error) {
+      console.log(error);
       return responce({
         res,
         code: 500,
@@ -200,30 +282,59 @@ if (req.file !== undefined && req.file !== null) {
     // get all movie full option
 
     if (req.query?.category && req.query?.username && req.query?.all) {
-      console.log("moviecategoryfillter1 ____________________________________________________________________________________")
       try {
-
         const category = req.query?.category;
         const username = req.query?.username;
-        const page = 1;
-        const pageSize = 1000;
+        const page = Number(req.query.page);
+        const pageSize = Number(req.query.pageSize);
         const movies = await db.Movies.findAll(
           paginate(
             {
-              where: {
-                [Op.and]: [{ username: username }, { genre_ids: category }],
-              },
-              include: [{ model: db.Category, where: { bits:category },required: true }],
+              where: { username: username },
+              include: [
+                {
+                  model: db.Category,
+                  where: { bits: category },
+                  required: true,
+                },
+              ],
+              order: [
+                ["id", "DESC"],
+                
+              ],
             },
             { page, pageSize }
           )
         );
 
+        const count = await db.Movies.findOne({
+          attributes: [
+            [sequelize.fn("COUNT", sequelize.col("id")), "countMovies"],
+          ],
+          include: [
+            {
+              model: db.Category,
+              where: { bits: category },
+              required: true,
+              through: { attributes: [] },
+            },
+          ],
+          raw: true,
+          where: { username: username },
+        });
+        if (movies?.length < 1 && !count) {
+          return responce({
+            res,
+            code: 200,
+            message: "ok",
+            data: { movies: movies, count: 0 },
+          });
+        }
         return responce({
           res,
           code: 200,
           message: "ok",
-          data: movies,
+          data: { movies: movies, count: count.countMovies },
         });
       } catch (error) {
         return responce({
@@ -233,36 +344,65 @@ if (req.file !== undefined && req.file !== null) {
           data: error,
         });
       }
-      
     }
 
     // get all movie __remove option.all
-    else if (req.query?.category && req.query?.username ) {
-      console.log("moviecategoryfillter2 ____________________________________________________________________________________")
+    else if (req.query?.category && req.query?.username) {
       try {
-
         const category = Number(req.query?.category);
         const username = req.query?.username;
-        const pageSize = Number(req.query.pageSize);
         const page = Number(req.query.page);
+        const pageSize = Number(req.query.pageSize);
         const movies = await db.Movies.findAll(
           paginate(
             {
-              where:{ username: username },
-              include: [{ model: db.Category, where: { bits:category },required: true }],
+              where: { username: username },
+              include: [
+                {
+                  model: db.Category,
+                  where: { bits: category },
+                  required: true,
+                },
+              ],
+              order: [
+                ["id", "DESC"],
+                
+              ],
             },
             { page, pageSize }
           )
         );
-
+        const count = await db.Movies.findOne({
+          attributes: [
+            [sequelize.fn("COUNT", sequelize.col("id")), "countMovies"],
+          ],
+          include: [
+            {
+              model: db.Category,
+              where: { bits: category },
+              required: true,
+              through: { attributes: [] },
+            },
+          ],
+          where: { username: username },
+          raw: true,
+        });
+        if (movies?.length < 1 && !count) {
+          return responce({
+            res,
+            code: 200,
+            message: "ok",
+            data: { movies: movies, count: 0 },
+          });
+        }
         return responce({
           res,
           code: 200,
           message: "ok",
-          data: movies,
+          data: { movies: movies, count: count.countMovies },
         });
       } catch (error) {
-        return  responce({
+        return responce({
           res,
           code: 500,
           message: "fail",
@@ -270,11 +410,9 @@ if (req.file !== undefined && req.file !== null) {
         });
       }
     }
-    // get all movie __remove option.all & category
-   else if (req.query?.username) {
-     console.log("moviecategoryfillter3 ____________________________________________________________________________________")
+    // get all movie ______ option.username
+    else if (req.query?.username && !req.query?.category) {
       try {
-
         const pageSize = Number(req.query.pageSize);
         const page = Number(req.query.page);
         const username = req.query?.username;
@@ -282,20 +420,38 @@ if (req.file !== undefined && req.file !== null) {
           paginate(
             {
               where: { username: username },
-              include: [{ model: db.Category }],
+              order: [
+                ["id", "DESC"],
+                
+              ],
             },
             { page, pageSize }
           )
         );
 
+        const count = await db.Movies.findOne({
+          attributes: [
+            [sequelize.fn("COUNT", sequelize.col("id")), "countMovies"],
+          ],
+          where: { username: username },
+          raw: true,
+        });
+        if (movies?.length < 1 && !count) {
+          return responce({
+            res,
+            code: 200,
+            message: "ok",
+            data: { movies: movies, count: 0 },
+          });
+        }
         return responce({
           res,
           code: 200,
           message: "ok",
-          data: movies,
+          data: { movies: movies, count: count.countMovies },
         });
       } catch (error) {
-        return  responce({
+        return responce({
           res,
           code: 500,
           message: "fail",
@@ -304,143 +460,214 @@ if (req.file !== undefined && req.file !== null) {
       }
     }
 
-    // get all movie __remove option.all & username
-    else if (req.query?.category) {
-      console.log("moviecategoryfillter 4____________________________________________________________________________________")
+    // get all movie __option.category
+    else if (req.query?.category && !req.query?.username) {
       try {
-
         const category = Number(req.query?.category);
         const pageSize = Number(req.query.pageSize);
         const page = Number(req.query.page);
         const movies = await db.Movies.findAll(
           paginate(
             {
-              include: [{ model: db.Category, where: { bits:category },required: true }],
+              include: [
+                {
+                  model: db.Category,
+                  where: { bits: category },
+                  required: true,
+                },
+              ],
+              order: [
+                ["id", "DESC"],
+                
+              ],
+              row: true,
             },
             { page, pageSize }
           )
         );
-        return  responce({
+        const count = await db.Movies.findOne({
+          attributes: [
+            [sequelize.fn("COUNT", sequelize.col("id")), "countMovies"],
+          ],
+          include: [
+            {
+              model: db.Category,
+              where: { bits: category },
+              required: true,
+              through: { attributes: [] },
+            },
+          ],
+          raw: true,
+        });
+        if (movies?.length < 1 && !count) {
+          return responce({
+            res,
+            code: 200,
+            message: "ok",
+            data: { movies: movies, count: 0 },
+          });
+        }
+        return responce({
           res,
           code: 200,
           message: "ok",
-          data: movies,
+          data: { movies: movies, count: count.countMovies },
         });
       } catch (error) {
-        return  responce({
+        console.log(error);
+        return responce({
           res,
           code: 500,
           message: "fail",
           data: error,
         });
       }
-    
     }
-
-    // get all movies __ option.username & option.category
-    if (req.query.username && req.query?.Category) {
+    // get all movie __ option.page & pageSize
+    else if (
+      req.query.page &&
+      req.query?.pageSize &&
+      !req.query?.category | !req.query?.username
+    ) {
+      const pageSize = Number(req.query.pageSize);
+      const page = Number(req.query.page);
       try {
-        console.log("moviecategoryfillter5 ____________________________________________________________________________________")
-
-        const username = Number(req.query.username);
-        const category = Number(req.query.category);
+        const movies = await db.Movies.findAll(
+          paginate(
+            {
+              include: [{ model: db.Category }],
+              order: [
+                ["id", "DESC"],
+                
+              ],
+            },
+            { page, pageSize }
+          )
+        );
+        const count = await db.Movies.findOne({
+          attributes: [
+            [sequelize.fn("COUNT", sequelize.col("id")), "countMovies"],
+          ],
+          raw: true,
+        });
+        if (movies?.length < 1 && !count) {
+          return responce({
+            res,
+            code: 200,
+            message: "ok",
+            data: { movies: movies, count: 0 },
+          });
+        }
+        return responce({
+          res,
+          code: 200,
+          message: "ok",
+          data: { movies: movies, count: count.countMovies },
+        });
+      } catch (error) {
+        responce({
+          res,
+          code: 500,
+          message: "fail",
+          data: error,
+        });
+      }
+      return;
+    }
+    //get all movie ___option.all
+    else if (req.query?.all) {
+      try {
         const page = 1;
         const pageSize = 1000;
+        const movies = await db.Movies.findAll(
+          paginate(
+            {
+              include: [{ model: db.Category }],
+              order: [
+                ["id", "DESC"],
+                
+              ],
+            },
+            { page, pageSize }
+          )
+        );
+
+        const count = await db.Movies.findOne({
+          attributes: [
+            [sequelize.fn("COUNT", sequelize.col("id")), "countMovies"],
+          ],
+          raw: true,
+        });
+        if (movies?.length < 1 && !count) {
+          return responce({
+            res,
+            code: 200,
+            message: "ok",
+            data: { movies: movies, count: 0 },
+          });
+        }
+        return responce({
+          res,
+          code: 200,
+          message: "ok",
+          data: { movies: movies, count: count.countMovies },
+        });
+      } catch (error) {
+        return responce({
+          res,
+          code: 500,
+          message: "fail",
+          data: error,
+        });
+      }
+    }
+    //get all movie ___option.search
+    else if (req.query?.search) {
+      try {
+        console.log(req.query.search);
+        const page = 1;
+        const pageSize = 1000;
+        const value = "%" + req.query.search + "%";
         const movies = await db.Movies.findAll(
           paginate(
             {
               where: {
-                [Op.and]: [{ username: username }, { genre_ids: category }],
+                title: {
+                  [Op.substring]: req.query.search,
+                },
               },
-              include: [{ model: db.Category, where: { bits:category },required: true }],
+              include: [{ model: db.Category }],
+              order: [
+                ["id", "DESC"],
+                
+              ],
             },
             { page, pageSize }
           )
         );
 
-        return responce({
-          res,
-          code: 200,
-          message: "ok",
-          data: movies,
+        const count = await db.Movies.findOne({
+          attributes: [
+            [sequelize.fn("COUNT", sequelize.col("id")), "countMovies"],
+          ],
+          raw: true,
         });
-      } catch (error) {
-        return responce({
-          res,
-          code: 500,
-          message: "fail",
-          data: error,
-        });
-      }
-    }
-
-    //  get all movie ___option.category
-    if (req.query?.category) {
-      const page = 1;
-      const pageSize = 1000;
-      const category = Number(req.query?.category);
-      try {
-        console.log("moviecategoryfillter6 ____________________________________________________________________________________")
-
-        const cat=await db.Category.findOne({where:{bits:category}})
-        if(!cat){
+        if (movies?.length < 1 && !count) {
           return responce({
             res,
-            code: 400,
-            message: "fail",
-            data: error,
+            code: 200,
+            message: "ok",
+            data: { movies: movies, count: 0 },
           });
         }
-        const movies = await db.Movies.findAll(
-          paginate(
-            {
-              include: [{ model: db.Category, where: { bits:category },required: true }],
-            },
-            { page, pageSize }
-          )
-        );
-        
-        // console.log(movies)
         return responce({
           res,
           code: 200,
           message: "ok",
-          data: movies,
+          data: { movies: movies, count: count.countMovies },
         });
       } catch (error) {
-        return responce({
-          res,
-          code: 200,
-          message: "fail",
-          data: error,
-        });
-      }
-    }
-    // get all movie __option.username
-    if (req.query?.username) {
-      try {
-        console.log("moviecategoryfillter7 ____________________________________________________________________________________")
-
-        const username = req.query.username;
-        const page = 1;
-        const pageSize = 1000;
-        const movies = await db.Movies.findAll(
-          paginate(
-            {
-              where: { username: username },
-              include: [{ model: db.Category }],
-            },
-            { page, pageSize }
-          )
-        );
-
-        return responce({
-          res,
-          code: 200,
-          message: "ok",
-          data: movies,
-        });
-      } catch (error) {
+        console.log(error);
         return responce({
           res,
           code: 500,
@@ -449,123 +676,43 @@ if (req.file !== undefined && req.file !== null) {
         });
       }
     }
-
-    // get all movie __ option.page & pageSize
-    if (req.query.page && req.query?.pageSize) {
-      const pageSize = Number(req.query.pageSize);
-      const page = Number(req.query.page);
-      try {
-
-        const movies = await db.Movies.findAll(
-          paginate(
-            {
-              include: [{ model: db.Category }],
-            },
-            { page, pageSize }
-          )
-        );
-
-         responce({
-          res,
-          code: 200,
-          message: "ok",
-          data: movies,
-        });
-      } catch (error) {
-         responce({
-          res,
-          code: 500,
-          message: "fail",
-          data: error,
-        });
-      }
-      return
-    }
-    //get all movie ___option.all
-    if (req.query?.all) {
-      try {
-        console.log("moviecategoryfillter9 ____________________________________________________________________________________")
-
-        const page = 1;
-        const pageSize = 1000;
-        const movies = await db.Movies.findAll(
-          paginate(
-            {
-              include: [{ model: db.Category }],
-            },
-            { page, pageSize }
-          )
-        );
-
-        return responce({
-          res,
-          code: 200,
-          message: "ok",
-          data: movies,
-        });
-      } catch (error) {
-        return responce({
-          res,
-          code: 500,
-          message: "fail",
-          data: error,
-        });
-      }
-    }
-    // get all movie __option.page
-    // if (req.query?.page) {
-    //   try {
-    //     console.log("moviecategoryfillter10 ____________________________________________________________________________________")
-
-    //     const page = Number(req.query?.page);
-    //     const pageSize = 1000;
-    //     const movies = await db.Movies.findAll(
-    //       paginate(
-    //         {
-    //           include: [{ model: db.Category }],
-    //         },
-    //         { page, pageSize }
-    //       )
-    //     );
-
-    //      responce({
-    //       res,
-    //       code: 200,
-    //       message: "ok",
-    //       data: movies,
-    //     });
-    //   } catch (error) {
-    //      responce({
-    //       res,
-    //       code: 500,
-    //       message: "fail",
-    //       data: error,
-    //     });
-    //   }
-    //   return
-    // }
     try {
-      console.log("moviecategoryfillter12 ____________________________________________________________________________________")
-
       const movies = await db.Movies.findAll({
         include: [{ model: db.Category }],
       });
-       responce({
+      const count = await db.Movies.findOne({
+        attributes: [
+          [sequelize.fn("COUNT", sequelize.col("id")), "countMovies"],
+        ],
+        order: [
+          ["id", "DESC"],
+          
+        ],
+        raw: true,
+      });
+      if (movies?.length < 1 && !count) {
+        return responce({
+          res,
+          code: 200,
+          message: "ok",
+          data: { movies: movies, count: 0 },
+        });
+      }
+      return responce({
         res,
         code: 200,
         message: "ok",
-        data: movies,
+        data: { movies: movies, count: count.countMovies },
       });
     } catch (error) {
       // console.log(error)
-       responce({
+      responce({
         res,
         code: 500,
         message: "fail",
         data: error,
       });
     }
-   
   }
 
   async getMovieByUser(req, res) {}

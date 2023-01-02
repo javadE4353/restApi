@@ -5,17 +5,11 @@ import newAccessTokenAction from "../../redux/actionCreator/actionCreateAccessTo
 
 import { useEffect,useState } from "react";
 
-import {Userinfo} from "../../typeing"
+import {StateTypeAuth, Userinfo} from "../../typeing"
 import { Dispatch } from "redux";
 
 //loader
 
-interface StateTypeAuth {
-  auth:{accessToken: string | null | undefined;
-  userInfo: Userinfo;
-  isLoading: boolean;
-  erroMessage: null;}
-}
 
 interface accessToken{
   isLoading:boolean,
@@ -29,24 +23,21 @@ interface Props{
 const RequiredAuth = ({ allowedRoles }:Props) => {
   const user = useSelector((state:StateTypeAuth) => state?.auth);
   const newAccessToken = useSelector((state:accessToken) => state);
-  const [role,setRole]=useState<string>('')
   const location = useLocation();
   const dispatch: Dispatch<any> = useDispatch();
-  const navigate = useNavigate();
-  // console.log(user)
-  // useEffect(() => {
-  //   if (!user?.accessToken) {
-  //     console.log(user)
-  //     dispatch(newAccessTokenAction())
-  //   }
-  //   // if (!user?.accessToken) dispatch(newAccessTokenAction());
-  // }, []);
+  useEffect(() => {
+    if (!user?.accessToken) {
+      // dispatch(newAccessTokenAction(dispatch))
+    }
+  }, []);
+  useEffect(() => {
+      console.log(user)
+  }, [user?.isLoading]);
  
   // if (newAccessToken?.errorMessage) {
   //   // navigate("./login");
   //   console.log(newAccessToken?.errorMessage)
   // }
- 
   return allowedRoles?.includes(user?.userInfo !== null?user?.userInfo.role:'') ? (
     <>
       <div className="">

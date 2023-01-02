@@ -14,11 +14,17 @@ mylistRoute.post(
   mylistController.inserList
 );
 mylistRoute.get(
-  "/:id",
+  "/count/:id",
   verifyToken,
   verifyRoles(db.ROLES),
-  mylistController.getAllList
-);
+  mylistController.getMylistCount
+  );
+  mylistRoute.get(
+    "/:id",
+    verifyToken,
+    verifyRoles(db.ROLES),
+    mylistController.getAllList
+  );
 mylistRoute.delete(
   "/",
   verifyToken,

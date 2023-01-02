@@ -1,11 +1,9 @@
 import db from "../model/index.js";
 import { Op } from "sequelize";
+import sequelize from "sequelize";
 import { responce } from "../util/configResponce.js";
 import { paginate } from "../helper/paginate.js";
 import bcrypt from "bcrypt";
-
-
-
 
 export const updateUser = async function (req, res) {
   if (!req.body.username) {
@@ -46,34 +44,30 @@ export const updateUser = async function (req, res) {
       userId: user.toJSON().id,
     });
   }
- if(req.body?.password){
-  const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash(req.body.password, salt);
+  if (req.body?.password) {
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(req.body.password, salt);
     try {
-    const updatedRows = await db.user.update(
-       {...req.body,password:passwordHash} ,
-      {
+      const updatedRows = await db.user.update(
+        { ...req.body, password: passwordHash },
+        {
+          where: { id: req.params.id },
+        }
+      );
+      return res.status(200).json(updatedRows);
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  } else {
+    try {
+      const updatedRows = await db.user.update(req.body, {
         where: { id: req.params.id },
-      }
-    );
-    return res.status(200).json(updatedRows);
-  } catch (err) {
-    res.status(500).json(err);
+      });
+      return res.status(200).json(updatedRows);
+    } catch (err) {
+      res.status(500).json(err);
+    }
   }
- }else{
-try {
-    const updatedRows = await db.user.update(
-       req.body ,
-      {
-        where: { id: req.params.id },
-      }
-    );
-   return res.status(200).json(updatedRows);
-  } catch (err) {
-    res.status(500).json(err);
-  }
- }
-  
 };
 
 // delete user
@@ -107,14 +101,20 @@ export const deleteuser = async function (req, res) {
 };
 // createUser
 export const createUser = async function (req, res) {
-  console.log(req.body);
   const user = await db.user.findOne({
     where: {
       [Op.and]: [{ username: req.body.username }, { email: req.body.email }],
     },
   });
+
   if (user) {
     return res.status(409).send("نام کاربری و ایمیل از قبل وجود دارد");
+  }
+  const userdublicateUsername = await db.user.findOne({
+    where: { username: req.body.username },
+  });
+  if (userdublicateUsername) {
+    return res.status(409).send("نام کاربری از قبل وجود دارد");
   }
 
   if (!req.body.username && !req.body.email) {
@@ -124,25 +124,26 @@ export const createUser = async function (req, res) {
     return res.status(401).send("رمز ورود درست وارد نشده");
   }
   const data = {};
-  if (req.file) {
+  if (req.file !== undefined && req.file !== null) {
     data.image = req.file.path.replace(/\\/g, "/").substring(6);
+    req.body.image = `http://127.0.0.1:7000${data.image}`;
+  } else {
+    req.body.image = user.image;
   }
-  console.log(req.file);
   const newUser = await db.user.create(
     {
       username: req.body.username,
       mobile: req.body.mobile,
       email: req.body.email,
-      image: `http://localhost:7000/${data.image}`,
+      image: req.body.image,
       password: req.body.password,
-      roleuser: req.body.roleuser ? req.body.roleuser : null,
+      roleuser: req.body.roleuser ? req.body.roleuser : "user",
       role: [{}],
     },
     {
       include: db.Role,
     }
   );
-
   // check roles
   if (db.ROLES.includes(req.body.roleuser)) {
     const Role = await db.Role.findOne({ where: { name: req.body.roleuser } });
@@ -188,53 +189,277 @@ export const getUser = async function (req, res) {
     });
   }
 };
+//getCountUsersByRole
 
-// getAllUsers
-
-export const getAllUser = async function (req, res) {
-  if (req.query.page === "undefined" && req.query.pageSize === "undefined") {
-    page = 1;
-    pageSize = 3;
-  }
-  const pageSize = Number(req.query.pageSize);
-  const page = Number(req.query.page);
-
+export const getCountUsersByRole = async function (req, res) {
   try {
-    const users = await db.user.findAll(
-      paginate(
+    const user = await db.user.findAll({
+      attributes: ["username", "id", "roleuser"],
+      include: [
         {
-          include: [
-            {
-              model: db.Role,
-              attributes: ["name"],
-              through: { attributes: [] },
-            },
-          ],
-          order: [
-            ["id", "DESC"],
-            //   ["cityName", "ASC"],
-          ],
+          model: db.Role,
+          attributes: ["name"],
+          through: { attributes: [] },
         },
-        { page, pageSize }
-      )
+      ],
+    });
+    const users = await db.user.findAll({});
+
+    const roles = user.filter(
+      (item, index, self) =>
+        index ===
+        self.findIndex((t) => {
+          return t.roleuser === item.roleuser;
+        })
     );
-    const count = await db.user.count();
     return responce({
       res,
       code: 200,
       message: "ok",
-      data: [users, { count: count }],
+      data: { roles, users },
     });
-  } catch (err) {
- 
-
-    responce({
+  } catch (error) {
+    console.log(error);
+    return responce({
       res,
       code: 500,
       message: "fail",
-      data: err,
+      data: error,
     });
   }
+};
+
+// getAllUsers
+export const getAllUser = async function (req, res) {
+  //role and page
+  if (req.query.role && req.query.page) {
+    const page = req.query?.page ? Number(req.query.page) : 1;
+    const pageSize = req.query?.pageSize ? Number(req.query.pageSize) : 3;
+    try {
+      const users = await db.user.findAll(
+        paginate(
+          {
+            include: [
+              {
+                model: db.Role,
+                attributes: ["name"],
+                through: { attributes: [] },
+              },
+            ],
+            where: { roleuser: req.query.role },
+            order: [
+              ["id", "DESC"],
+              //   ["cityName", "ASC"],
+            ],
+          },
+          { page, pageSize }
+        )
+      );
+      const count = await db.user.findOne({
+        attributes: [[sequelize.fn("COUNT", sequelize.col("id")), "count"]],
+        raw: true,
+        where: { roleuser: req.query?.role },
+      });
+      return responce({
+        res,
+        code: 200,
+        message: "ok",
+        data: [users, { count: count }],
+      });
+    } catch (err) {
+      console.log(err);
+      responce({
+        res,
+        code: 500,
+        message: "fail",
+        data: err,
+      });
+    }
+  }
+  //role
+  else if (req.query.role && !req.query.page) {
+    const page = req.query?.page ? Number(req.query.page) : 1;
+    const pageSize = req.query?.pageSize ? Number(req.query.pageSize) : 1000;
+    try {
+      const users = await db.user.findAll(
+        paginate(
+          {
+            include: [
+              {
+                model: db.Role,
+                attributes: ["name"],
+                through: { attributes: [] },
+              },
+            ],
+            where: { roleuser: req.query.role },
+            order: [
+              ["id", "DESC"],
+              //   ["cityName", "ASC"],
+            ],
+          },
+          { page, pageSize }
+        )
+      );
+      const count = await db.user.findOne({
+        attributes: [[sequelize.fn("COUNT", sequelize.col("id")), "count"]],
+        raw: true,
+        where: { roleuser: req.query?.role },
+      });
+      return responce({
+        res,
+        code: 200,
+        message: "ok",
+        data: [users, { count: count }],
+      });
+    } catch (err) {
+      responce({
+        res,
+        code: 500,
+        message: "fail",
+        data: err,
+      });
+    }
+  }
+  //search
+  else if (req.query.search) {
+    const page = req.query?.page ? Number(req.query.page) : 1;
+    const pageSize = req.query?.pageSize ? Number(req.query.pageSize) : 1000;
+    try {
+      const users = await db.user.findAll(
+        paginate(
+          {
+            include: [
+              {
+                model: db.Role,
+                attributes: ["name"],
+                through: { attributes: [] },
+              },
+            ],
+            where: {
+              username: {
+                [Op.substring]: req.query.search,
+              },
+            },
+            order: [
+              ["id", "DESC"],
+              //   ["cityName", "ASC"],
+            ],
+          },
+          { page, pageSize }
+        )
+      );
+      const count = await db.user.findOne({
+        attributes: [[sequelize.fn("COUNT", sequelize.col("id")), "count"]],
+        raw: true,
+        where: {
+          username: {
+            [Op.substring]: req.query.search,
+          },
+        },
+      });
+      return responce({
+        res,
+        code: 200,
+        message: "ok",
+        data: [users, { count: count }],
+      });
+    } catch (err) {
+      responce({
+        res,
+        code: 500,
+        message: "fail",
+        data: err,
+      });
+    }
+  }
+
+  //pageination
+  else if (
+    req.query.pageSize &&
+    req.query.page &&
+    !req.query?.search &&
+    !req.query?.role
+  ) {
+    const page = req.query?.page ? Number(req.query.page) : 1;
+    const pageSize = req.query?.pageSize ? Number(req.query.pageSize) : 1000;
+    try {
+      console.log("user____________________________________4");
+      console.log("user____________________________________4");
+      const users = await db.user.findAll(
+        paginate(
+          {
+            include: [
+              {
+                model: db.Role,
+                attributes: ["name"],
+                through: { attributes: [] },
+              },
+            ],
+            order: [
+              ["id", "DESC"],
+              //   ["cityName", "ASC"],
+            ],
+          },
+          { page, pageSize }
+        )
+      );
+      const count = await db.user.findOne({
+        attributes: [[sequelize.fn("COUNT", sequelize.col("id")), "count"]],
+        raw: true,
+      });
+      return responce({
+        res,
+        code: 200,
+        message: "ok",
+        data: [users, { count: count }],
+      });
+    } catch (err) {
+      console.log(err);
+      responce({
+        res,
+        code: 500,
+        message: "fail",
+        data: err,
+      });
+    }
+  } else
+    try {
+      console.log("user____________________________________5");
+      console.log("user____________________________________5");
+      console.log("user____________________________________5");
+
+      const users = await db.user.findAll({
+        include: [
+          {
+            model: db.Role,
+            attributes: ["name"],
+            through: { attributes: [] },
+          },
+        ],
+        order: [
+          ["id", "DESC"],
+          //   ["cityName", "ASC"],
+        ],
+      });
+      const count = await db.user.findOne({
+        attributes: [[sequelize.fn("COUNT", sequelize.col("id")), "count"]],
+        raw: true,
+      });
+      return responce({
+        res,
+        code: 200,
+        message: "ok",
+        data: [users, { count: count }],
+      });
+    } catch (err) {
+      console.log(err);
+      responce({
+        res,
+        code: 500,
+        message: "fail",
+        data: err,
+      });
+    }
 };
 
 // // //GET USER STATS

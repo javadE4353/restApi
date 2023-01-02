@@ -60,7 +60,7 @@ export const insertRatings = (rated: Ratings,data:Movies,movietitle:string,movie
      if(response?.status === 200){
 
       const res = await axiosPrivate.put(
-        `${BASE_URL}/movies?title=${movietitle}&movieid=${movieid}&username=${rated?.username}`,data
+        `${BASE_URL}/movies?title=${movietitle}&movieid=${movieid}&userid=${userid}`,data
       );
 
       if(res?.status === 200 || res?.status === 200){

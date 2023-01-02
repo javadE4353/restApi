@@ -6,16 +6,15 @@ import ClipLoader from "react-spinners/ClipLoader";
 import MoonLoader from "react-spinners/MoonLoader";
 import { motion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams} from "react-router-dom";
 import { HiOutlineXMark } from "react-icons/hi2";
 import MuiModal from "@mui/material/Modal";
 
 //
 import useAxiosPrivate from "../hook/useAxiosPrivate";
-import { getUser, updateUser } from "../redux/actionCreator/actionCreateUsers";
+import {updateUser } from "../redux/actionCreator/actionCreateUsers";
 import { Users, StateTypeAuth } from "../typeing";
-import { useRecoilState } from "recoil";
-import { modalEditUser } from "../atoms/modalAtom";
+
 
 //interface
 const override: CSSProperties = {
@@ -35,16 +34,14 @@ const overrideupdate: CSSProperties = {
 };
 interface State {
   users: {
-    user: Users | null;
+    users: Users[] | null;
     count: number;
     update: number;
     isloading: boolean;
     ErrorMessage: string | null;
   };
 }
-interface Props {
-  id: number | null;
-}
+
 interface Inputs {
   email: string;
   username: string;
@@ -55,15 +52,23 @@ interface Inputs {
   image: string;
 }
 
-//component
-const EditUser = ({ id }: Props) => {
-  let [color, setColor] = useState("#ffffff");
-  const [showModal, setShowModal] = useRecoilState(modalEditUser);
-  const auth = useSelector((state: StateTypeAuth) => state?.auth);
+interface Props{
+  path:string
+}
 
-  const dispatch: Dispatch<any> = useDispatch();
-  const stateUsers = useSelector((state: State) => state?.users);
+//component
+const EditUser = ({path}:Props) => {
+  let [color, setColor] = useState("#ffffff");
+  //modal
+  const [showModal, setShowModal] = useState<boolean>(false);
   const [Errormsg, setErrormsg] = useState<string>("");
+  const [user, setuser] = useState<Users[]>([]);
+  //state user
+  const stateUsers = useSelector((state: State) => state?.users);
+  const auth = useSelector((state: StateTypeAuth) => state?.auth);
+  //
+  const {id} =useParams()
+  const dispatch: Dispatch<any> = useDispatch();
   const navigate = useNavigate();
   const axiosPrivate = useAxiosPrivate();
   const {
@@ -72,21 +77,18 @@ const EditUser = ({ id }: Props) => {
     watch,
     formState: { errors },
   } = useForm<Inputs>();
+//handlecloseModal
   const handleClose = () => {
-    setShowModal(!showModal);
+    setShowModal(false);
+    navigate(`/dashboard/${path}`);
   };
-  useEffect(() => {
-    if (id !== null) {
-      dispatch(getUser(axiosPrivate, id));
-    }
-  }, []);
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    if (stateUsers?.user !== null) {
+    if (user?.[0] !== null) {
       const formData = new FormData();
       formData.append("image", data.image[0]);
       if(data.image.length == 0) formData.delete("image");
-      formData.append("username", stateUsers?.user?.username);
+      formData.append("username",user?.[0]?.username);
       if(data.username == "") formData.delete("username");
       formData.append(
         "password",
@@ -113,22 +115,30 @@ const EditUser = ({ id }: Props) => {
         data.roleuser
       );
       if(data.roleuser == "") formData.delete("roleuser");
-      if (id !== null && stateUsers?.user !== undefined) {
-        dispatch(updateUser(axiosPrivate, formData, id));
+      if (id !== null && user ) {
+        dispatch(updateUser(axiosPrivate, formData, Number(id)));
       }
     }
   };
-
+//
   const handleupdate = useCallback(() => {
       if (stateUsers?.update === 1 && id !== null) {
-         setShowModal(false);
-        dispatch(getUser(axiosPrivate, id));
+         navigate(`/dashboard/${path}`);
       }
   }, [stateUsers?.update]);
-
+  //
+  useEffect(() => {
+    if (id !== null && stateUsers?.users) {
+      const user=stateUsers.users.filter(U =>U.id === Number(id))
+      setuser(user || [])
+    }
+    setShowModal(true)
+  }, []);
+  //
   useEffect(() => {
     handleupdate();
   }, [stateUsers?.update]);
+console.log(path)
   return (
     <>
       <MuiModal
@@ -180,8 +190,9 @@ const EditUser = ({ id }: Props) => {
               {/* <!-- Modal content --> */}
               <div className="relative p-4 bg-[#1b2a4e] rounded-lg shadow dark:bg-gray-800 sm:p-5">
                 {/* <!-- Modal header --> */}
-                <div className="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
-                  <h3 className="text-lg font-semibold text-white dark:text-white">
+                <div className="flex  pb-4 mb-4  justify-between items-center rounded-t border-b sm:mb-5 dark:border-gray-600">
+                    <div className="flex justify-between items-center rounded-t sm:mb-5">
+                    <h3 className="text-lg font-semibold text-white dark:text-white">
                     بستن
                   </h3>
                   <button
@@ -192,6 +203,10 @@ const EditUser = ({ id }: Props) => {
                     <HiOutlineXMark size={20} className="text-red-400" />
                     <span className="sr-only">بستن</span>
                   </button>
+                    </div>
+                    <div className="flex text-start items-start bg-red-400 py-1 px-4 border border-red-400 rounded-sm">
+                      {user[0]?.roleuser =="admin"?"مدیر":user[0]?.roleuser =="user"?"کاربر":""}
+                    </div>
                 </div>
                 {/* <!-- Modal body --> */}
                 <form onSubmit={handleSubmit(onSubmit)}>
@@ -219,7 +234,7 @@ const EditUser = ({ id }: Props) => {
                       <input
                         type="email"
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder={stateUsers?.user?.email}
+                        placeholder={user[0]?.email || ""}
                         {...register("email")}
                       />
                     </div>
@@ -233,7 +248,7 @@ const EditUser = ({ id }: Props) => {
                       <input
                         type="tel"
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder={stateUsers?.user?.mobile}
+                        placeholder={user[0]?.mobile || ""}
                         {...register("mobile")}
                       />
                     </div>
@@ -263,10 +278,10 @@ const EditUser = ({ id }: Props) => {
                         </label>
                         <select
                           {...register("roleuser")}
-                          className="bg-gray-50 border border-gray-300 text-white text-sm rounded-sm focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                          className="bg-gray-50 border border-gray-300 text-block text-sm rounded-sm focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         >
-                          <option value="admin">admin</option>
-                          <option value="user">user</option>
+                          <option className="text-block" value="admin">admin</option>
+                          <option className="text-block" value="user">user</option>
                         </select>
                       </div>
                     ) : null}
@@ -279,7 +294,7 @@ const EditUser = ({ id }: Props) => {
                       </label>
                       <textarea
                         className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-sm border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder={stateUsers?.user?.profile}
+                        placeholder={user[0]?.profile || ""}
                         {...register("profile")}
                       ></textarea>
                     </div>

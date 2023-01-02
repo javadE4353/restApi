@@ -34,8 +34,9 @@ updatedAt:string | null
     username?:string | null 
     userid?:number 
     roleuser?:string
-    createdAt?: string | null
+    createdAt?: string
     categories?:categories[]
+    categoryTitle?:string
   }
   //
   export interface Userinfo{

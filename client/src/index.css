@@ -31,7 +31,7 @@
     background-color: rgba(18,18,18,1);
   }
   .heightSidebar{
-    @apply fixed top-0 z-50 flex w-full transition-all lg:py-20;
+    @apply fixed top-0 z-50 flex transition-all lg:py-20;
   }
 
   .bg-modal{

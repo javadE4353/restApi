@@ -59,6 +59,7 @@ function loginReducer(state: StateTypeAuth = initialState, action: Action) {
         ...state,
         userInfo: payload.userInfo,
         accessToken: payload.accessToken,
+        isLoading: false,
       };
     // case VERIFY_ACCOUNT:
     //   return {

@@ -12,24 +12,34 @@ const jwt = require("jsonwebtoken");
 
 const handleRefreshToken = async (req, res) => {
   const cookies = req.cookies;
-  if (!cookies?.jwt) return res.status(401);
+  if (!cookies?.jwt) {
+   return responce({
+      res,
+      code: 400,
+      message: "The cookie is not set in the url",
+    });
+  }
   const refreshToken = cookies.jwt;
-  res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
+  // res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
 
   const TokensRefresh = await db.Token.findOne({
     where: { name: refreshToken },
   });
 
   if (!TokensRefresh) {
-    return res.status(400).send("There is no token refresh");
+    return responce({
+      res,
+      code: 403,
+      message: "There is no token refresh",
+    });
   }
+  res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
 
   const foundUser = await db.user.findOne({
     where: { id: TokensRefresh?.toJSON().userId },
   });
+
   if (foundUser === null) {
-    console.log(foundUser)
-    console.log("foundUser null")
     jwt.verify(
       refreshToken,
       process.env.SECRET_KEY_REFRESH_TOKEN,
@@ -42,13 +52,16 @@ const handleRefreshToken = async (req, res) => {
         const hackedUser = await db.user.findOne({
           username: decoded.username,
         });
-        await db.Token.destroy({
-          where: { userId: hackedUser.id },
-        });
+      // const remove=  await db.Token.destroy({
+      //     where: { userId: hackedUser.toJSON().id },
+      //   });
       }
     );
-    console.log("null user---------------------------------------------------------------")
-    return res.sendStatus(403);
+    return responce({
+      res,
+      code: 403,
+      message: "There are no users with this token",
+    });
   }
 
   jwt.verify(
@@ -57,10 +70,12 @@ const handleRefreshToken = async (req, res) => {
     async (err, decoded) => {
       if (err) {
         console.log(err);
-        console.log("expire verify refreshtoken null-------------------------")
-        res.status(403);
+        return responce({
+          res,
+          code: 403,
+          message: "The token has expired",
+        });
       }
-
       if (err || foundUser.toJSON().username !== decoded.username) return res.sendStatus(403);
       const roles = await db.RoleHasUser.findOne({
         where: { userId: foundUser.toJSON().id },
@@ -74,7 +89,7 @@ const handleRefreshToken = async (req, res) => {
         {
           userInfo: {
             username: decoded.username,
-            roles: newRole.toJSON().name,
+            role: newRole.toJSON().name,
           },
         },
         process.env.SECRET_KEY_ACCESS_TOKEN,
@@ -91,30 +106,49 @@ const handleRefreshToken = async (req, res) => {
           [Op.and]: [{ name: refreshToken }, { userId: foundUser.toJSON().id }],
         },
       });
-      await db.Token.create({
-        userId: foundUser.toJSON().id,
-        name: newRefreshToken,
-      });
-
-      res.cookie("jwt", newRefreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        maxAge: 24 * 60 * 60 * 1000
-      });
-
-      const userInfo = {
-        role: newRole.toJSON().name,
-        username: decoded.username,
-        id: decoded.id,
-      };
-      console.log(userInfo)
-      responce({
-        res,
-        code: 200,
-        message: "ok",
-        data: { userInfo, accessToken },
-      });
+       try {
+        await db.Token.create({
+          userId: foundUser.toJSON().id,
+          name: newRefreshToken,
+        });
+        res.cookie("jwt", newRefreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "None",
+          maxAge: 24 * 60 * 60 * 1000
+        });
+        const userInfo = {
+          role: newRole.toJSON().name,
+          username: decoded.username,
+          id: decoded.id,
+        };
+        responce({
+          res,
+          code: 200,
+          message: "The token has been updated",
+          data: { userInfo, accessToken },
+        });
+       } catch (error) {
+        console.log(error)
+       }
+    //   res.cookie("jwt", newRefreshToken, {
+    //     httpOnly: true,
+    //     secure: true,
+    //     sameSite: "None",
+    //     maxAge: 24 * 60 * 60 * 1000
+    //   });
+    // req.newRefreshTokenRequest=newRefreshToken;
+    //   const userInfo = {
+    //     role: newRole.toJSON().name,
+    //     username: decoded.username,
+    //     id: decoded.id,
+    //   };
+    //   responce({
+    //     res,
+    //     code: 200,
+    //     message: "ok",
+    //     data: { userInfo, accessToken },
+    //   });
     }
   );
 };

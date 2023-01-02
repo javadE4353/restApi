@@ -69,11 +69,11 @@ export const movies = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         defaultValue: null,
       },
-      roleuser:{
+      roleuser: {
         type: DataTypes.STRING,
         defaultValue: null,
       },
-      movieid:{
+      movieid: {
         type: DataTypes.INTEGER,
         defaultValue: null,
       },
@@ -81,10 +81,10 @@ export const movies = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         defaultValue: null,
       },
-      userId:{
+      userId: {
         type: DataTypes.INTEGER,
         defaultValue: null,
-      }
+      },
     },
     {
       freezeTableName: true,

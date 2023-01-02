@@ -44,7 +44,7 @@ const Sidebar = () => {
       animate={{ width: "100%", transition: { duration: 0.3 } }}
       exit={{ x: window.innerWidth, transition: { duration: 0.1 } }}
     >
-      <section className="flex sticky top-14 z-[150] heightSidebar gap-6">
+      <section className="flex sticky top-14 z-[150] heightSidebar gap-6 md:hidden">
         <div
           className={`bg-sidebar min-h-screen ${
             open ? "w-60" : "w-16"

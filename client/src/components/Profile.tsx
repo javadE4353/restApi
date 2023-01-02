@@ -1,25 +1,24 @@
-import {useEffect} from "react"
+import {useEffect, useState} from "react"
 
 //module external
 import { useSelector } from "react-redux";
-import EditUser from "./EditeUser";
 import { useRecoilState } from "recoil";
 import { modalEditUser } from "../atoms/modalAtom";
 import { HiEllipsisVertical } from "react-icons/hi2";
 import { motion } from "framer-motion";
 import * as timeago from "timeago.js/lib/index";
-
+import {Link, Outlet} from 'react-router-dom'
 //
 import { StateTypeAuth, Users } from "../typeing";
 import { useDispatch } from "react-redux";
 import { Dispatch } from "redux";
 import useAxiosPrivate from "../hook/useAxiosPrivate";
-import {getUser } from "../redux/actionCreator/actionCreateUsers";
+import {getUsers } from "../redux/actionCreator/actionCreateUsers";
 
 //interface
 interface State {
   users: {
-    user: Users | null;
+    users: Users[];
     count: number;
     insert: number;
     isloading: boolean;
@@ -29,17 +28,22 @@ interface State {
 
 //component
 const Profile = () => {
-  const [showModal, setShowModal] = useRecoilState(modalEditUser);
   const user = useSelector((state: StateTypeAuth) => state?.auth);
   const stateUsers = useSelector((state: State) => state?.users);
+  const [users,setUser]=useState<Users[]>([])
   const dispatch: Dispatch<any> = useDispatch();
   const axiosPrivate = useAxiosPrivate();
   useEffect(() => {
       if(user?.userInfo?.id){
-        dispatch(getUser(axiosPrivate,user?.userInfo?.id));
+        dispatch(getUsers(axiosPrivate,{}));
       }
   }, [])
-  
+  useEffect(() => {
+  if(stateUsers?.users && user?.userInfo){
+    const USER=stateUsers?.users.filter(U => U.id == user?.userInfo?.id)
+    setUser(USER || [])
+  }
+  }, [stateUsers?.users])
   return (
     <motion.div
       initial={{ opacity: 0,}}
@@ -50,19 +54,21 @@ const Profile = () => {
         <section className="w-64 mx-auto bg-[#20354b] rounded-2xl px-8 py-6 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-gray-400 text-sm">
-              {timeago?.format(stateUsers?.user?.createdAt || "2022-10-25")}
+
+               <span>{timeago?.format(users[0]?.createdAt || "2022-10-25")}</span>
             </span>
-            <span
+            <Link
+             to={`edit/${user?.userInfo?.id}`}
               className="text-emerald-400"
-              onClick={() => setShowModal(!showModal)}
+             
             >
               <HiEllipsisVertical size={25} />
-            </span>
+            </Link>
           </div>
           <div className="mt-6 w-fit mx-auto">
             <img
               src={
-                stateUsers?.user?.image ||
+                users[0]?.image ||
                 "https://api.lorem.space/image/face?w=120&h=120&hash=bart89fe"
               }
               className="rounded-full w-28 "
@@ -83,7 +89,7 @@ const Profile = () => {
             <div className="h-1 rounded-full w-2/5 bg-yellow-500 "></div>
           </div> */}
           {
-            timeago.format(stateUsers?.user?.updatedAt || "").includes("just")?
+            timeago.format(users[0]?.updatedAt || "").includes("just")?
           <div className="mt-3 text-white text-sm text-center">
             <span className="text-gray-400 font-semibold">ویرایش انجام شد</span>
           </div> 
@@ -92,9 +98,7 @@ const Profile = () => {
           }
         </section>
       </section>
-      {showModal && user?.userInfo?.id ? (
-        <EditUser id={user?.userInfo?.id} />
-      ) : null}
+      <Outlet/>
     </motion.div>
   );
 };

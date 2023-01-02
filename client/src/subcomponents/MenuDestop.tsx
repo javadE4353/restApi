@@ -71,7 +71,13 @@ const MenuDesktop: React.FC<Props> = ({ isScrolled }) => {
                 isScrolled ? "hover:text-cyan-500" : null
               }`}
             >
-              <Link to="/mylist"> لیست من</Link>
+              {user?.role === "admin" ? (
+                <Link to="/mylist"> لیست من</Link>
+              ) : user?.role === "user" ? (
+                <Link to="/me/mylist"> لیست من</Link>
+              ) : (
+                <Link to=""> لیست من</Link>
+              )}
             </li>
           ) : null}
           <li
@@ -122,7 +128,7 @@ const MenuDesktop: React.FC<Props> = ({ isScrolled }) => {
         {/* <HiMagnifyingGlass className="hidden h-6 w-6 sm:inline text-white" /> */}
         <div>
           <Link
-            to="/account"
+            to={user?.role === "user" ? "create/account" : "/account"}
             className="text-white transiation ease-in-out hover:text-blue-700 duration-300"
           >
             خرید اشتراک

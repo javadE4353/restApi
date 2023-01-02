@@ -36,9 +36,7 @@ function Thumbnail({ movie }: Props) {
         onClick={() => handleShowMovie()}
       >
         <img
-          src={`https://image.tmdb.org/t/p/w500${
-            movie?.backdrop_path || movie?.poster_path
-          }`}
+          src={`https://image.tmdb.org/t/p/original/${movie?.poster_path}`}
           className="rounded-sm object-cover md:rounded"
         />
       </div>

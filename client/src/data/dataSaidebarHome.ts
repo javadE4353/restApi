@@ -21,5 +21,5 @@ export const menuUser = [
   { name: "اکشن", link: "/action", icon: FiFolder, margin: true },
   { name: "برترین ها", link: "/comady", icon: FiFolder },
   { name: "سریال", link: "/action", icon: FiFolder },
-  { name: "لیست من", link: "/mylist", icon: FiFolder },
+  { name: "لیست من", link: "/me/mylist", icon: FiFolder },
 ];

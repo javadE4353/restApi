@@ -29,6 +29,9 @@ export const menusAdmin = [
   { name: "کاربران", link: "/dashboard/users", icon: HiOutlineUsers },
   { name: "دسته بندی", link: "/dashboard/category", icon: FiFolder, margin: false },
   { name: "فیلم", link: "/dashboard/movies", icon: FiFolder, margin: false },
+  { name: "لیست من", link: "/dashboard/mylist", icon: FiFolder, margin: false },
+  { name: " گزارش", link: "/dashboard/report", icon: FiFolder, margin: false },
+  { name: " تنظیمات", link: "/dashboard/setting", icon: FiFolder, margin: false },
   {
     name: "خروج",
     link: "/",

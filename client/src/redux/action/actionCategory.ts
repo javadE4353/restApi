@@ -6,7 +6,7 @@ import {
   UPDATECATEGORY,
   DELETECATEGORY,
   FAILCATEGORY,
-
+  GETCATEGORYPUBLIC,
 } from "../types/types";
 
 interface Cat{
@@ -20,7 +20,11 @@ interface REQUEST {
 }
 interface getcategory {
   type: "GETCATEGORY";
-  payload: {categorys:Cat[]};
+  payload: {categorys:Cat[],count:number};
+}
+interface getCategoryPublic {
+  type: "GETCATEGORYPUBLIC";
+  payload: {categoryPublic:Cat[]};
 }
 interface insertcategory {
   type: "INSERTCATEGORY";
@@ -39,4 +43,4 @@ interface failcategory {
   payload: {ErrorMassege:string | null};
 }
 
-export type Action = updatecategory | deletecategory | failcategory | insertcategory | getcategory | REQUEST;
+export type Action = updatecategory | getCategoryPublic | deletecategory | failcategory | insertcategory | getcategory | REQUEST;

@@ -9,11 +9,11 @@ import { Dispatch } from "redux";
 import MuiModal from "@mui/material/Modal";
 import { HiOutlineXMark } from "react-icons/hi2";
 import { useRecoilState } from "recoil";
-import { Link, useNavigate,Outlet } from "react-router-dom";
+import { Link, useNavigate,Outlet, useParams } from "react-router-dom";
 import MoonLoader from "react-spinners/MoonLoader";
-// import DatePicker from 'react-datepicker';
-// import addDays from 'date-fns/addDays'
-// import "react-datepicker/dist/react-datepicker.css";
+import DatePicker from 'react-datepicker';
+import addDays from 'date-fns/addDays'
+import "react-datepicker/dist/react-datepicker.css";
 //
 import useAxiosPrivate from "../hook/useAxiosPrivate";
 
@@ -24,9 +24,10 @@ import {
   insertUser,
   updateUser,
 } from "../redux/actionCreator/actionCreateUsers";
-import { Users, Userinfo } from "../typeing";
+import { Users, Userinfo, Movies, StateTypeAuth } from "../typeing";
 import { modalCreateUser, modalEditUser } from "../atoms/modalAtom";
-import getCategorys from "../redux/actionCreator/actionCreateCategory";
+import getCategorys, { getPublicCategory } from "../redux/actionCreator/actionCreateCategory";
+import { updatemovie } from "../redux/actionCreator/actionMovie";
 
 // interface and stylecss
 const override: CSSProperties = {
@@ -53,7 +54,18 @@ const override: CSSProperties = {
       ErrorMessage: string | null;
     };
   }
-  
+  interface MoviesType {
+    movies: {
+      movies: Movies[];
+      movie: Movies;
+      count: number;
+      insert: number;
+      update: number;
+      delete: number;
+      isloading: boolean;
+      ErrorMessage: string | null;
+    };
+  }
   interface Inputs {
     adult: string,
     backdrop_path: string,
@@ -72,32 +84,42 @@ const override: CSSProperties = {
     movieid: string,
 
   }
-  interface Cat{
-    title:string,
-    bits:number,
-    image:string,
-    content:string 
+  interface Cat {
+    title: string;
+    bits: number;
+    image: string;
+    content: string;
   }
   interface Categorys {
-    categorys:{
-     categorys: Cat[] ;
-     update:number
-     delete:number
-     insert:number
-     isloading: boolean;
-     ErrorMassege:string | null
-    }
-   }
+    categorys: {
+      categorys: Cat[];
+      categoryPublic: Cat[];
+      update: number;
+      delete: number;
+      insert: number;
+      isloading: boolean;
+      ErrorMassege: string | null;
+    };
+  }
 const UpdateMovie = () => {
   let [color, setColor] = useState("#ffffff");
+
+  //state movie and category
   const [showModalCreateUser, setShowModalCreateUser] =useRecoilState(modalCreateUser);
-  const categorys = useSelector((state: Categorys) => state?.categorys?.categorys);
-  const dispatch: Dispatch<any> = useDispatch();
-  const stateUsers = useSelector((state: State) => state?.users);
-  const [Errormsg, setErrormsg] = useState<string>("");
-  const [startDate, setStartDate] = useState(new Date());
-  const navigate = useNavigate();
-  const axiosPrivate = useAxiosPrivate();
+  const categorys = useSelector((state: Categorys) => state?.categorys?.categoryPublic); 
+  const movies = useSelector((state: MoviesType) => state?.movies);
+  const user = useSelector((state: StateTypeAuth) => state?.auth);
+
+//
+const [Errormsg, setErrormsg] = useState<string>("");
+const [startDate, setStartDate] = useState(new Date());
+const [movie, setMovie] = useState<Movies[]>([]);
+
+//
+const navigate = useNavigate();
+const {id} =useParams();
+const dispatch: Dispatch<any> = useDispatch();
+const axiosPrivate = useAxiosPrivate();
   const {
     register,
     handleSubmit,
@@ -111,30 +133,48 @@ const UpdateMovie = () => {
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     const formData = new FormData();
     formData.append("adult", data.adult);
+    if(data.adult == "") formData.delete("adult")
     formData.append("backdrop_path", data.backdrop_path[0]);
+    if(data.backdrop_path == null) formData.delete("backdrop_path")
     formData.append("genre_ids", data.genre_ids);
+    if(data.genre_ids == "") formData.delete("genre_ids")
     formData.append("original_language", data.original_language);
+    if(data.original_language == "") formData.delete("original_language")
     formData.append("original_title", data.original_title);
+    if(data.original_title == "") formData.delete("original_title")
     formData.append("overview", data.overview);
+    if(data.overview == "") formData.delete("overview")
     formData.append("popularity", data.popularity);
-    formData.append("poster_path", data.poster_path[0]);
-    formData.append("release_date", data.release_date);
+    if(data.popularity == "") formData.delete("popularity")
+    // formData.append("poster_path", data.poster_path[0]);
+    // if(data.poster_path == null) formData.delete("poster_path")
+    formData.append("release_date", startDate.toLocaleDateString());
+    if(data.release_date == "") formData.delete("release_date")
     formData.append("title", data.title);
+    if(data.title == "") formData.delete("title")
     formData.append("video", data.video);
+    if(data.video == "") formData.delete("video")
     formData.append("vote_average", data.vote_average);
+    if(data.vote_average == "") formData.delete("vote_average")
     formData.append("vote_count", data.vote_count);
+    if(data.vote_count == "") formData.delete("vote_count")
     formData.append("media_type", data.media_type);
-    formData.append("movieid", data.movieid);
-    dispatch(insertUser(axiosPrivate, formData));
+    if(data.media_type == "") formData.delete("media_type")
+    // formData.append("movieid", data.movieid);
+    // if(data.movieid == "") formData.delete("movieid")
+    if(user?.userInfo && id)
+    dispatch(updatemovie(axiosPrivate, formData,Number(id),user?.userInfo?.id));
   };
 
-  const handleInsert = useCallback(() => {
-  }, []);
-
   useEffect(() => {
-    dispatch(getCategorys());
-    handleInsert();
+    dispatch(getPublicCategory());
   }, []);
+  useEffect(() => {
+       if(movies?.movies && id){
+        const movie=movies?.movies.filter(M=>M.id === Number(id));
+        setMovie( movie || [])
+       }
+  }, [movies?.movies]);
   return (
     <>
       <motion.div
@@ -201,7 +241,7 @@ const UpdateMovie = () => {
                     <input
                       type="text"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-red-400 focus:border-red-400 block w-full p-2.5 dark:bg-gray-700 dark:border-red-400 dark:placeholder-gray-400 dark:text-black dark:focus:ring-red-400 dark:focus:border-red-400"
-                      placeholder=" "
+                      placeholder={movie[0]?.title}
                       {...register("title")}
                     />
                   </div>
@@ -220,27 +260,8 @@ const UpdateMovie = () => {
                     <input
                       type="text"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder=""
+                      placeholder={movie[0]?.original_title}
                       {...register("original_title")}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      form=""
-                      className="block mb-2 text-sm font-medium text-black dark:text-black"
-                    >
-                      {errors.adult && (
-                        <p className="text-sm  text-orange-500">
-                          رده سنی بالا
-                        </p>
-                      )}
-                       رده سنی بالا
-                    </label>
-                    <input
-                      type="chackbox"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-red-400 focus:border-red-400 block w-full p-2.5 dark:bg-gray-700 dark:border-red-400 dark:placeholder-gray-400 dark:text-black dark:focus:ring-red-400 dark:focus:border-red-400"
-                      placeholder="رده سنی "
-                      {...register("adult")}
                     />
                   </div>
                   <div>
@@ -258,7 +279,7 @@ const UpdateMovie = () => {
                     <input
                       type="number"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-red-400 focus:border-red-400 block w-full p-2.5 dark:bg-gray-700 dark:border-red-400 dark:placeholder-gray-400 dark:text-black dark:focus:ring-red-400 dark:focus:border-red-400"
-                      placeholder=" "
+                      placeholder={`${movie[0]?.vote_average}`}
                       {...register("vote_average")}
                     />
                   </div>
@@ -277,7 +298,7 @@ const UpdateMovie = () => {
                     <input
                       type="number"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-red-400 focus:border-red-400 block w-full p-2.5 dark:bg-gray-700 dark:border-red-400 dark:placeholder-gray-400 dark:text-black dark:focus:ring-red-400 dark:focus:border-red-400"
-                      placeholder=" "
+                      placeholder={`${movie[0]?.vote_count}`}
                       {...register("vote_count")}
                     />
                   </div>
@@ -294,9 +315,9 @@ const UpdateMovie = () => {
                            نوع فیلم
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-red-400 focus:border-red-400 block w-full p-2.5 dark:bg-gray-700 dark:border-red-400 dark:placeholder-gray-400 dark:text-black dark:focus:ring-red-400 dark:focus:border-red-400"
-                      placeholder=" سریال,تلویزیون, سینمایی"
+                      placeholder={movie[0]?.media_type}
                       {...register("media_type")}
                     />
                   </div>
@@ -335,9 +356,8 @@ const UpdateMovie = () => {
                     <input
                       type="number"
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder=""
+                      placeholder={`${movie[0]?.popularity}`}
                       {...register("popularity", {
-                        required: true,
                       })}
                     />
                   </div>
@@ -349,17 +369,11 @@ const UpdateMovie = () => {
                     >
                       تاریخ ساخت
                     </label>
-                    {/* <DatePicker
-                        selected={startDate}
-                        onChange={(date:Date) => setStartDate(date)}
-                        showTimeSelect
-                        timeFormat="HH:mm"
-                        timeIntervals={20}
-                        timeCaption="time"
-                        dateFormat="MMMM d, yyyy h:mm aa"
-                        minDate={new Date()}
-                        maxDate={addDays(new Date(), 7)}
-                    /> */}
+                    <DatePicker
+                      selected={startDate}
+                      onChange={(date: Date) => setStartDate(date)}
+                      className="text-black border-black w-full "
+                    />
                   </div>
                   <div>
                     <label
@@ -382,7 +396,7 @@ const UpdateMovie = () => {
                       form=""
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
-                       
+                       ویدئو
                     </label>
                     <select
                       {...register("video")}
@@ -417,7 +431,7 @@ const UpdateMovie = () => {
                     </label>
                     <textarea
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-sm border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      placeholder="توضیحات گوتاه فیلم"
+                      placeholder={movie[0]?.overview}
                       {...register("overview")}
                     ></textarea>
                   </div>
@@ -428,7 +442,7 @@ const UpdateMovie = () => {
                     type="submit"
                     className="text-white bg-red-600 hover:bg-red-400 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-sm text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
                   >
-                    ایجاد
+                    ویرایش
                   </button>
                 </div>
               </form>

@@ -77,6 +77,10 @@ export const mylistModel = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         defaultValue: null,
       },
+      categoryTitle: {
+        type: DataTypes.STRING,
+        defaultValue: null,
+      },
       userId: {
         type: DataTypes.INTEGER,
         defaultValue: null,

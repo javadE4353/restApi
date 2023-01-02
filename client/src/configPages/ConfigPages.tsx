@@ -1,11 +1,10 @@
-import {useEffect,useState} from "react"
-
+import { useEffect, useState } from "react";
 
 //module external
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { AnimatePresence } from "framer-motion";
-
+import { useDispatch, useSelector } from "react-redux";
+import { Dispatch } from "redux";
 //type
 import { Movies } from "../typeing";
 //components
@@ -29,6 +28,10 @@ import InsertCategoryModal from "../subcomponents/ModalCategoryInsert";
 import UpdateMovie from "../components/UpdateMovie";
 import UpdateCategoryModal from "../subcomponents/ModalCategoryupdate";
 import TableCategory from "../components/TableCategory";
+import EditUser from "../components/EditeUser";
+import NewUser from "../components/Newuser";
+import { getPublicCategory } from "../redux/actionCreator/actionCreateCategory";
+import { getAllmovie } from "../redux/actionCreator/actionMovie";
 
 // interface
 interface Roles {
@@ -40,40 +43,43 @@ interface Mylist {
   mylist: { mylist: Movies[] };
 }
 interface MoviesType {
-  movie: Movies[] | null;
-  Allmovie: Movies[] | null;
-  insert: number;
-  update: number;
-  delete: number;
-  isloading: boolean;
-  ErrorMessage: string | null;
+  movies: {
+    movie: Movies[];
+    Allmovie: Movies[];
+    insert: number;
+    update: number;
+    delete: number;
+    isloading: boolean;
+    ErrorMessage: string | null;
+  };
 }
-interface Cat{
-  name:string,
-  bits:number,
-  image:string,
-  content:string 
+interface Cat {
+  name: string;
+  bits: number;
+  image: string;
+  content: string;
 }
 
 interface Categorys {
- categorys:{
-  categorys: Cat[];
-  update:number
-  delete:number
-  insert:number
-  isloading: boolean;
-  ErrorMassege:string | null
- }
+  categorys: {
+    categorys: Cat[];
+    update: number;
+    delete: number;
+    insert: number;
+    isloading: boolean;
+    ErrorMassege: string | null;
+  };
 }
 const ConfigPages = () => {
+  const [comedy, setComedy] = useState<number>(0);
+  const [action, setAction] = useState<number>(0);
 
-  const [comedy,setComedy]=useState<number>(0)
-  const [action,setAction]=useState<number>(0)
-
-  const movies = useSelector((state: MoviesType) => state?.Allmovie);
+  const movies = useSelector((state: MoviesType) => state?.movies?.Allmovie);
   const mylist = useSelector((state: Mylist) => state?.mylist.mylist);
-  const categorys = useSelector((state: Categorys) => state?.categorys?.categorys);
-
+  const categorys = useSelector(
+    (state: Categorys) => state?.categorys?.categorys
+  );
+  const dispatch: Dispatch<any> = useDispatch();
   const location = useLocation();
   const ROLES: Roles = {
     User: "user",
@@ -81,12 +87,16 @@ const ConfigPages = () => {
   };
 
   useEffect(() => {
-    categorys?.map((item)=>{
-     if( item.bits == 28)setComedy(item.bits);
-     if( item.bits == 80)setComedy(item.bits);
-    })
-  }, [])
-  
+    categorys?.map((item) => {
+      if (item.bits == 28) setComedy(item.bits);
+      if (item.bits == 80) setComedy(item.bits);
+    });
+  }, []);
+  useEffect(() => {
+    dispatch(getAllmovie());
+    dispatch(getPublicCategory());
+  }, []);
+
   return (
     <AnimatePresence exitBeforeEnter>
       <Routes location={location} key={location.pathname}>
@@ -99,43 +109,58 @@ const ConfigPages = () => {
         <Route path="/unauthorized" element={<Unauthorized />}></Route>
         <Route
           path="/comedy"
-          element={<Category movie={movies} gener={comedy}/>}
+          element={<Category movie={movies} gener={comedy} />}
         ></Route>
         <Route
           path="/action"
-          element={<Category movie={movies} gener={action}/>}
+          element={<Category movie={movies} gener={action} />}
         ></Route>
         {/* Role Admin */}
         <Route element={<RequiredAuth allowedRoles={[ROLES.Admin]} />}>
-          <Route path="/dashboard" element={<Dashboard path={"users"} />}>
-            <Route path="users" element={<ViewTableUser />} />
-            <Route path="profile" element={<Profile />} />
+          <Route path="/dashboard" element={<Dashboard path={"admin"} />}>
+            {/* TABLEUSERS */}
+            <Route path="users" element={<ViewTableUser />}>
+              <Route path="update/:id" element={<EditUser path={"users"} />} />
+              <Route path="insert" element={<NewUser />} />
+            </Route>
+            {/* PROFILE */}
+            <Route path="profile" element={<Profile />}>
+              <Route path="edit/:id" element={<EditUser path={"profile"} />} />
+            </Route>
+            {/* TABLEMOVIES */}
             <Route path="movies" element={<TableMovies />} />
-            <Route path="editmovie" element={<UpdateMovie />} >
-              <Route path="editcategory" element={<UpdateCategoryModal />} />
+            <Route path="editmovie/:id" element={<UpdateMovie />} />
+            <Route path="addmovie" element={<InsertMovie />} />
+            {/* TABLECATEGORY */}
+            <Route path="category" element={<TableCategory />}>
+              <Route path="update/:id" element={<UpdateCategoryModal />} />
+              <Route path="insert" element={<InsertCategoryModal />} />
             </Route>
-            <Route path="updatemovie" element={<UpdateMovie />} />
-            <Route path="category" element={<TableCategory />} />
-            <Route path="addmovie" element={<InsertMovie />} >
-            <Route path="newcategory" element={<InsertCategoryModal />} />
-            </Route>
+            {/* MYLIST */}
+            <Route path="mylist" element={<TableMovieMylist />}></Route>
+            {/* NOTFOUNT */}
             <Route path="*" element={<Notfount />}></Route>
           </Route>
           <Route path="/account" element={<Account />}></Route>
-          <Route path="/mylist" element={<Category movie={mylist} gener={categoryMovies?.mylist}/>}></Route>
+          <Route
+            path="/mylist"
+            element={<Category movie={mylist} gener={categoryMovies?.mylist} />}
+          ></Route>
         </Route>
         {/* Role User */}
         <Route element={<RequiredAuth allowedRoles={[ROLES.User]} />}>
-          <Route
-            path="/dashboard/me"
-            element={<Dashboard path={"me/profile"} />}
-          >
+          <Route path="/dashboard/me" element={<Dashboard path={"user"} />}>
             <Route path="mylist" element={<TableMovieMylist />}></Route>
-            <Route path="profile" element={<ViewTableUser />}></Route>
+            <Route path="profile" element={<Profile />}>
+              <Route path="edit/:id" element={<EditUser path={"profile"} />} />
+            </Route>
             <Route path="*" element={<Notfount />}></Route>
           </Route>
-          <Route path="/account" element={<Account />}></Route>
-          <Route path="/mylist" element={<Category movie={mylist} gener={categoryMovies?.mylist}/>}></Route>
+          <Route path="create/account" element={<Account />}></Route>
+          <Route
+            path="/me/mylist"
+            element={<Category movie={mylist} gener={categoryMovies?.mylist} />}
+          ></Route>
         </Route>
         {/* Route Notfount */}
         <Route path="*" element={<Notfount />}></Route>

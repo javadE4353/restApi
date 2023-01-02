@@ -1,7 +1,5 @@
 import {
-  useCallback,
   useEffect,
-  useMemo,
   useState,
   CSSProperties,
 } from "react";
@@ -23,7 +21,6 @@ import { Outlet } from "react-router-dom";
 
 //
 import Header from "../components/Header";
-import Modal from "../components/Modal";
 import Row from "../components/Row";
 import Sidebar from "../components/Saidebar";
 import SliderHome from "../components/slider";
@@ -46,16 +43,18 @@ const override: CSSProperties = {
 interface togglesidebar {
   sidebar: { toggle: boolean };
 }
-interface MoviesType {
-  movies:{ 
-    movieAll: Movies[];
-    movie: Movies;
-    insert: number;
-    update: number;
-    delete: number;
-    isloading: boolean;
-    ErrorMessage: string ;}
-  }
+
+  interface MoviesType {
+    movies:{
+      movie: Movies[] ;
+      Allmovie: Movies[];
+      insert: number;
+      update: number;
+      delete: number;
+      isloading: boolean;
+      ErrorMessage: string | null;
+    }
+    }
 interface Mylist {
   mylist: { mylist: Movies[]; isloading: boolean };
 }
@@ -70,6 +69,7 @@ interface Cat{
 interface Categorys {
  categorys:{
   categorys: Cat[] ;
+  categoryPublic: Cat[] ;
   update:number
   delete:number
   insert:number
@@ -80,26 +80,33 @@ interface Categorys {
 
 const Home: React.FC = () => {
   let [color, setColor] = useState("#ffffff");
-  let [showalret, setShowAlert] = useState(true);
+  const [showalret, setShowAlert] = useState(true);
+  const [cat, setCat] = useState<Cat[]>([]);
 
   const mylist = useSelector((state: Mylist) => state?.mylist);
   const user = useSelector((state: StateTypeAuth) => state?.auth);
 
   const dispatch: Dispatch<any> = useDispatch();
-  const accesstoken = useSelector(
-    (state: StateAccessToken) => state?.accesstoken
-  );
-  const movies = useSelector((state: MoviesType) => state?.movies?.movieAll);
-  const categorys = useSelector((state: Categorys) => state?.categorys?.categorys);
+  const movies = useSelector((state: MoviesType) => state?.movies?.Allmovie);
+  const categorys = useSelector((state: Categorys) => state?.categorys?.categoryPublic);
   const toggle = useSelector((state: togglesidebar) => state?.sidebar?.toggle);
   const axiosPrivate = useAxiosPrivate();
 
   useEffect(() => {
     if (user?.accessToken && user?.userInfo?.id) {
-      dispatch(getAllmylist(user?.userInfo?.id, axiosPrivate));
+      dispatch(getAllmylist(axiosPrivate,user?.userInfo?.id,{}));
     }
   }, []);
-
+  useEffect(()=>{
+    const cat=categorys?.filter(item=>{
+      if(item.bits !==1 && item.bits !== 100){
+        return item
+      }
+    })
+    if(cat?.length>0)
+    setCat(cat)
+  },[categorys])
+  //return
   return (
     <div
       className="relative h-screen bg-gradient-to-b from-gray-900/10 to-[#010511] lg:h-[140vh] "
@@ -115,7 +122,7 @@ const Home: React.FC = () => {
       >
         <strong className="font-bold">رمز ورود و نام کاربری:ادمین</strong>
         <span className="block sm:inline">
-          <span className="mx-2">نام کاربری:golren</span>
+          <span className="mx-2">نام کاربری:جواد</span>
           <span>رمز ورود:%$@G1234</span>
         </span>
         <span
@@ -126,19 +133,6 @@ const Home: React.FC = () => {
         </span>
       </div>
       <main className="relative pl-4 pb-16 sm:pb-0 lg:space-y-24 lg:pl-16">
-        <MuiModal
-          open={user?.userInfo?.username ? accesstoken?.isLoading : false}
-          className="fixed !top-7 left-0 right-0 z-50 mx-auto w-full max-w-5xl overflow-hidden overflow-y-scroll rounded-md scrollbar-hide"
-        >
-          <ClipLoader
-            color={color}
-            loading={user?.userInfo?.username ? accesstoken?.isLoading : false}
-            cssOverride={override}
-            size={50}
-            aria-label="Loading Spinner"
-            data-testid="loader"
-          />
-        </MuiModal>
         <>
           <div className={`${toggle ? "block" : "hidden"}`}>
             <Sidebar />
@@ -146,9 +140,10 @@ const Home: React.FC = () => {
           <SliderHome />
           <section className="md:space-y-24">
             {
-              categorys?.length>0?categorys?.map((item,i)=>(
-              item?.bits !==1 && <Row key={i} title={item?.title} movies={movies} category={item?.bits}/>
-              )):null
+              cat?.length>0?cat?.map((item,i)=>(
+                <Row key={i} title={item?.title} movies={movies} category={item?.bits}/>
+              )
+              ):null
             }
             {user?.accessToken ? (
               <>

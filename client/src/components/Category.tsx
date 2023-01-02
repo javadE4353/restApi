@@ -15,6 +15,7 @@ interface Props {
 
 function Category({ movie, gener }: Props) {
   const [showalret, setShowAlert] = useRecoilState(showAlert);
+  console.log(movie);
   return (
     <>
       <div
@@ -54,7 +55,8 @@ function Category({ movie, gener }: Props) {
                     </>
                   ) : (
                     <>
-                      movie?.genre_ids.includes(gener) && <Card key={item.id} movie={item} />
+                      movie?.genre_ids.includes(gener) &&{" "}
+                      <Card key={item.id} movie={item} />
                     </>
                   )}
                 </div>

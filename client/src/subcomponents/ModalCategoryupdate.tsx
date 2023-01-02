@@ -10,24 +10,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { Dispatch } from "redux";
 import MuiModal from "@mui/material/Modal";
 import { HiOutlineXMark } from "react-icons/hi2";
-import { useRecoilState } from "recoil";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import MoonLoader from "react-spinners/MoonLoader";
 
 
 //
 import useAxiosPrivate from "../hook/useAxiosPrivate";
-
-import {
-  deleteUser,
-  getUser,
-  getUsers,
-  insertUser,
-  updateUser,
-} from "../redux/actionCreator/actionCreateUsers";
-import { Users, Userinfo, StateTypeAuth } from "../typeing";
-import { modalCreateUser, modalEditUser } from "../atoms/modalAtom";
-import { insertCaegory } from "../redux/actionCreator/actionCreateCategory";
+import { Users,StateTypeAuth } from "../typeing";
+import {updateCategory } from "../redux/actionCreator/actionCreateCategory";
 
 // interface and stylecss
 const override: CSSProperties = {
@@ -60,52 +50,76 @@ interface Inputs {
   content: string;
   image: string;
 }
-
+interface Cat {
+  title: string;
+  image: string;
+  content: string;
+  bits: number;
+  username: string;
+  createdAt: string;
+  updatedAt: string;
+}
+interface Categorys {
+  categorys: {
+    categorys: Cat[];
+    categoryPublic: Cat[];
+    count: number;
+    update: number;
+    delete: number;
+    insert: number;
+    isloading: boolean;
+    ErrorMassege: string | null;
+  };
+}
 //component
 const UpdateCategoryModal = () => {
-  let [color, setColor] = useState("#ffffff");
-  const [showModalCreateUser, setShowModalCreateUser] =useState<boolean>(false);
-  const user = useSelector((state: StateTypeAuth) => state?.auth);
 
+  //
+  let [color, setColor] = useState("#ffffff");
+
+  //
+  const [showModalInsertCategory, setShowModalInsertCategory] =useState<boolean>(false);
+  const user = useSelector((state: StateTypeAuth) => state?.auth);
+  const categorys = useSelector((state: Categorys) => state?.categorys);
+
+  //
   const dispatch: Dispatch<any> = useDispatch();
-  const stateUsers = useSelector((state: State) => state?.users);
-  const [Errormsg, setErrormsg] = useState<string>("");
   const navigate = useNavigate();
   const axiosPrivate = useAxiosPrivate();
+  const{id}=useParams()
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
   } = useForm<Inputs>();
+
+  // close modal
   const handleClose = () => {
-    setShowModalCreateUser(false);
-    navigate("/dashboard/addmovie")
+    setShowModalInsertCategory(false);
+    navigate("/dashboard/category")
   };
 
+  // create category
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    let Bits = JSON.stringify(Math.floor( Math.random() * (1000 - 1) ) + 50);
     const formData = new FormData();
     formData.append("image", data.image[0]);
+    if(!data.image[0])formData.delete("image")
     formData.append("title", data.title);
+    if(data.title =="")formData.delete("title")
     formData.append("content", data.content);
-    formData.append("bits",Bits);
-    if(user?.userInfo?.id){
-    dispatch(insertCaegory(axiosPrivate,formData,user?.userInfo?.id));
+    if(data.content =="")formData.delete("content")
+    if(id)formData.append("bits",id);
+    if(user?.userInfo?.id && id){
+    dispatch(updateCategory(axiosPrivate,formData,user?.userInfo?.id,Number(id)));
     }
   };
   
-
-  const handleInsert=useCallback(()=>{
-    if(stateUsers?.insert === 1){
-      dispatch(getUsers(axiosPrivate,1,3));
-      setShowModalCreateUser(false);
-    }
-  },[stateUsers?.insert])
-
+  // change state showmodal
   useEffect(() => {
-    setShowModalCreateUser(true)
+    setShowModalInsertCategory(true)
   }, [])
+  //return
   return (
     <>
       <MuiModal
@@ -122,12 +136,12 @@ const UpdateCategoryModal = () => {
         />
       </MuiModal>
       <MuiModal
-        open={false}
+        open={categorys.update?true:false}
         className="fixed !top-7 left-0 right-0 z-50 mx-auto w-full max-w-5xl overflow-hidden overflow-y-scroll rounded-md scrollbar-hide"
       >
         <MoonLoader
           color={"#36d7b7"}
-          loading={false}
+          loading={categorys.update?true:false}
           cssOverride={overrideupdate}
           size={50}
           aria-label="Loading Spinner"
@@ -135,7 +149,7 @@ const UpdateCategoryModal = () => {
         />
       </MuiModal>
       <MuiModal
-        open={showModalCreateUser}
+        open={showModalInsertCategory}
         onClose={() => handleClose()}
         className="fixed  overflow-x-hidden !top-7 left-0 right-0 z-50 mx-auto w-full max-w-5xl overflow-hidden overflow-y-scroll rounded-md scrollbar-hide"
       >
@@ -146,7 +160,7 @@ const UpdateCategoryModal = () => {
         >
           <div className="flex justify-center m-5">
             <span className="block text-white bg-red-600 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-              ویرایش دسته بندی جدید
+              ویرایش دسته بندی 
             </span>
           </div>
 
@@ -221,11 +235,11 @@ const UpdateCategoryModal = () => {
                   </div>
                   <div className="flex items-center space-x-4">
                     <button
-                      onClick={() => setErrormsg("")}
+                      // onClick={() => setErrormsg("")}
                       type="submit"
                       className="text-white bg-red-600 hover:bg-red-400 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-sm text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
                     >
-                      ایجاد
+                      ویرایش
                     </button>
                   </div>
                 </form>

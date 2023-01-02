@@ -20,6 +20,7 @@ interface MovieType {
   insert: number;
   update: number;
   delete: number;
+  count:number | null
   isloading: boolean;
   ErrorMessage:string | null
 }
@@ -28,6 +29,7 @@ const initialState = {
   movies: null,
   movie: null,
   Allmovie:null,
+  count:null,
   insert: 0,
   update: 0,
   delete: 0,
@@ -47,6 +49,7 @@ const movieReducer = (state: MovieType = initialState, action: Action) => {
     case REQUESTGETMOVIES:
       return {
         movies: action?.payload?.movies,
+        count: action?.payload?.count,
         isloading: false,
       };
       break;

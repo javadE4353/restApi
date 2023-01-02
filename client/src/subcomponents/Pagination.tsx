@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 //module external
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi2";
@@ -12,16 +12,20 @@ interface Props {
   page: number;
   separate: number;
   moving: number;
+  title:string
 }
 
 //component
-const Pageination = ({ page, moving, separate }: Props) => {
+const Pageination = ({ page, moving, separate,title }: Props) => {
   const [pageinationatom, setPageinationAtom] = useRecoilState(pageinationAtom);
 
-  const [pageination, setPageination] = useState<number[]>([0, separate]);
-  const [count, setCount] = useState<number[]>([]);
   const [prev, setPrev] = useState<number>(0);
+  
+  const [pageination, setPageination] = useState<number[]>([0, separate]);
+  //Number of saved videos
+  const [count, setCount] = useState<number[]>([]);
 
+  //Controlling the next and previous buttons
   const handlePageination = (type: string) => {
     const pagein = [...pageination];
     if (type === "next") {
@@ -42,12 +46,15 @@ const Pageination = ({ page, moving, separate }: Props) => {
     }
   };
 
+//Back to the first page by clicking the button
   const handlepagePrev = (prev: number) => {
     setPageinationAtom(prev);
     setPageination([0, separate]);
     setPrev(prev - prev);
   };
 
+  // Get the number of pages based on the number of videos
+  //The number of videos by the number of lines
   const hanldePage = useCallback(() => {
     const count = Math.ceil(page / separate);
     const num = [];
@@ -57,14 +64,25 @@ const Pageination = ({ page, moving, separate }: Props) => {
     if (num.length > 0) {
       setCount(num);
     }
-  }, [page]);
+  }, [page,separate]);
 
+//It is executed by changing the number of movies
   useEffect(() => {
     hanldePage();
-  }, [page]);
+  }, [page,separate]);
   return (
     <>
       <nav>
+        <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center text-black">
+            <span className="text-[7px]">تعداد صفحات</span>
+            <span className="text-red-400">({page!=0?((count?.length -1) + 1):0})</span>
+          </div>
+          <div className="flex items-center text-black">
+            <span className="text-[7px]">تعداد {title}</span>
+            <span className="text-red-400">({page})</span>
+          </div>
+        </div>
         <ul className="inline-flex items-center -space-x-px">
           <li>
             <button
@@ -77,18 +95,33 @@ const Pageination = ({ page, moving, separate }: Props) => {
               <HiChevronRight size={20} />
             </button>
           </li>
-          {count?.slice(pageination[0], pageination[1]).map((p, i) => (
-            <li key={i}>
-              <button
-                onClick={() => setPageinationAtom(p)}
-                className={`px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
-                  p == pageinationatom ? "bg-blue-600" : null
-                }`}
-              >
-                {p}
-              </button>
-            </li>
-          ))}
+           {
+            page==0?
+            <li>
+            <button
+             
+              className={`px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white 
+              `}
+            >
+              0
+            </button>
+          </li>
+            :
+            <>
+              {count?.slice(pageination[0], pageination[1]).map((p, i) => (
+              <li key={i}>
+                <button
+                  onClick={() => setPageinationAtom(p)}
+                  className={`px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                    p == pageinationatom ? "bg-blue-600" : null
+                  }`}
+                >
+                  {p}
+                </button>
+              </li>
+            ))}
+            </>
+           }
           <ul className={`text-blue-500 ${prev > 0 ? "flex" : "hidden"}`}>
             <li className="flex justfy-center items-center mr-[1px]]">
               <span className="bg-blue-500 w-2 h-2 inline-block rounded"></span>

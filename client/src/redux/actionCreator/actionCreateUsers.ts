@@ -19,20 +19,51 @@ import { BASE_URL } from "../../axios/configApi";
    delete:number
    ErrorMessage:string | null
   }
-
+  interface Option{
+    page?:number
+    pageSize?:number
+    userid?:number
+    search?:string
+    role?:string
+  }
   type UsersDispatch = {
       type: string
       payload?: Payload
     }
   type DispatchType = (args: UsersDispatch) => UsersDispatch
-  export const getUsers = (axiosPrivate: AxiosInstance,page?:number,pageSize?:number) => {
+  export const getUsers = (axiosPrivate: AxiosInstance,option:Option) => {
+    const url = `${BASE_URL}/users`;
+    let baseUrl = "";    
+    if (option?.role && option?.page) {
+      baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}&role=${option?.role}`;
+    } 
+    else if (option?.role && !option?.page) {
+      baseUrl = `${url}?role=${option?.role}`;
+    } 
+     else if (option?.search && option?.page && option?.pageSize) {
+      baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}&search=${option?.search}`;
+    } 
+     else if (option?.search && !option?.page) {
+      baseUrl = `${url}?search=${option?.search}`;
+    } 
+     else if (option?.pageSize && option?.page) {
+      baseUrl = `${url}?page=${option?.page}&pageSize=${option?.pageSize}`;
+    } 
+    else if (
+      Object.keys(option).length < 1 ||
+      option == null ||
+      option == undefined
+    ) {
+      baseUrl = `${url}`;
+    }
+    console.log(baseUrl)
     return async (dispatch:DispatchType) => {
       dispatch({ type: REQUESTUSER});
       try {
-        const response = await axiosPrivate.get(`${BASE_URL}/users?page=${page}&pageSize=${pageSize}`);
+        const response = await axiosPrivate.get(`${baseUrl}`);
         dispatch({
           type: GETUSERS,
-          payload:{users:response?.data?.data?.[0],ErrorMessage:null,count:response?.data?.data?.[1]?.count,insert:0,update:0,delete:0}
+          payload:{users:response?.data?.data?.[0],ErrorMessage:null,count:response?.data?.data?.[1]?.count.count,insert:0,update:0,delete:0}
         });
         console.log(response)
       } catch (error) {

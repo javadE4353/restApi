@@ -15,7 +15,7 @@ interface requestMovie {
 }
 interface getmovies {
   type: "REQUESTGETMOVIES";
-  payload:{ movies:Movies[]};
+  payload:{ movies:Movies[],count:number};
 }
 interface getAllmovie {
   type: "REQUESTGETALLMOVIE";

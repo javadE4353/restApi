@@ -9,82 +9,85 @@ import { Dispatch } from "redux";
 import MuiModal from "@mui/material/Modal";
 import { HiOutlineXMark } from "react-icons/hi2";
 import { useRecoilState } from "recoil";
-import { Link, useNavigate,Outlet } from "react-router-dom";
+import { Link, useNavigate, Outlet } from "react-router-dom";
 import MoonLoader from "react-spinners/MoonLoader";
-import DatePicker from 'react-datepicker';
-import addDays from 'date-fns/addDays'
+import DatePicker from "react-datepicker";
+import addDays from "date-fns/addDays";
 import "react-datepicker/dist/react-datepicker.css";
 //
 import useAxiosPrivate from "../hook/useAxiosPrivate";
 
-
 import { Users, StateTypeAuth } from "../typeing";
-import getCategorys from "../redux/actionCreator/actionCreateCategory";
+import getCategorys, {
+  getPublicCategory,
+} from "../redux/actionCreator/actionCreateCategory";
 import { insertmovie } from "../redux/actionCreator/actionMovie";
 
 // interface and stylecss
 const override: CSSProperties = {
-    display: "block",
-    margin: "0 auto",
-    borderColor: "red",
-    position: "absolute",
-    top: "50%",
-    transform: "translate(-50%, -50%)",
-    right: "44%",
+  display: "block",
+  margin: "0 auto",
+  borderColor: "red",
+  position: "absolute",
+  top: "50%",
+  transform: "translate(-50%, -50%)",
+  right: "44%",
+};
+const overrideupdate: CSSProperties = {
+  borderColor: "#36d7b7",
+  position: "absolute",
+  top: "50%",
+  right: "44%",
+};
+interface State {
+  users: {
+    user: Users | null;
+    count: number;
+    insert: number;
+    isloading: boolean;
+    ErrorMessage: string | null;
   };
-  const overrideupdate: CSSProperties = {
-    borderColor: "#36d7b7",
-    position: "absolute",
-    top: "50%",
-    right: "44%",
-  };
-  interface State {
-    users: {
-      user: Users | null;
-      count: number;
-      insert: number;
-      isloading: boolean;
-      ErrorMessage: string | null;
-    };
-  }
-  
-  interface Inputs {
-    adult: string,
-    backdrop_path: string,
-    genre_ids: string,
-    original_language: string,
-    original_title: string,
-    overview: string,
-    popularity: string,
-    poster_path: string,
-    release_date: string,
-    title: string,
-    video: string,
-    vote_average: string,
-    vote_count: string,
-    media_type: string,
-    movieid: string,
+}
 
-  }
-  interface Cat{
-    title:string,
-    bits:number,
-    image:string,
-    content:string 
-  }
-  interface Categorys {
-    categorys:{
-     categorys: Cat[] ;
-     update:number
-     delete:number
-     insert:number
-     isloading: boolean;
-     ErrorMassege:string | null
-    }
-   }
+interface Inputs {
+  adult: string;
+  backdrop_path: string;
+  genre_ids: string;
+  original_language: string;
+  original_title: string;
+  overview: string;
+  popularity: string;
+  poster_path: string;
+  release_date: string;
+  title: string;
+  video: string;
+  vote_average: string;
+  vote_count: string;
+  media_type: string;
+  movieid: string;
+}
+interface Cat {
+  title: string;
+  bits: number;
+  image: string;
+  content: string;
+}
+interface Categorys {
+  categorys: {
+    categorys: Cat[];
+    categoryPublic: Cat[];
+    update: number;
+    delete: number;
+    insert: number;
+    isloading: boolean;
+    ErrorMassege: string | null;
+  };
+}
 const InsertMovie = () => {
   let [color, setColor] = useState("#ffffff");
-  const categorys = useSelector((state: Categorys) => state?.categorys?.categorys);
+  const categorys = useSelector(
+    (state: Categorys) => state?.categorys?.categoryPublic
+  );
   const user = useSelector((state: StateTypeAuth) => state?.auth);
 
   const dispatch: Dispatch<any> = useDispatch();
@@ -99,8 +102,6 @@ const InsertMovie = () => {
     formState: { errors },
   } = useForm<Inputs>();
 
-
-
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     const formData = new FormData();
     formData.append("adult", data.adult);
@@ -111,75 +112,73 @@ const InsertMovie = () => {
     formData.append("overview", data.overview);
     formData.append("popularity", data.popularity);
     // formData.append("poster_path", data.poster_path[0]);
-    formData.append("release_date", data.release_date);
+    formData.append("release_date",startDate.toLocaleDateString());
     formData.append("title", data.title);
     formData.append("video", data.video);
     formData.append("vote_average", data.vote_average);
     formData.append("vote_count", data.vote_count);
     formData.append("media_type", data.media_type);
     formData.append("movieid", data.movieid);
-    if(data.movieid == "") formData.delete("movieid")
-    if(user?.userInfo?.id){
-      dispatch(insertmovie(axiosPrivate, formData,user?.userInfo?.id));
+    if (data.movieid == "") formData.delete("movieid");
+    if (user?.userInfo?.id) {
+      dispatch(insertmovie(axiosPrivate, formData, user?.userInfo?.id));
     }
   };
 
-  const handleInsert = useCallback(() => {
-  }, []);
-
   useEffect(() => {
-    dispatch(getCategorys());
+    dispatch(getPublicCategory());
   }, []);
   return (
     <>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1, transition: { duration: 0.1 } }}
-        exit={{ opacity: 0,transition: { duration: 0.1 } }}
+        exit={{ opacity: 0, transition: { duration: 0.1 } }}
         className="p-4 overflow-x-auto relative shadow-md bg-[#f7f7f7] h-screen"
       >
-
         {/* <!-- Main modal --> */}
         <div className=" z-50 flex justify-center items-center w-full md:inset-0 h-auto md:h-auto">
           <div className="relative p-4 w-full h-full md:h-auto">
-
             {/* <!-- Modal content --> */}
             <div className="relative p-4 bg-white rounded-lg shadow dark:bg-gray-800 sm:p-5">
-            <div className="flex justify-start m-1">
-            <Link to="/dashboard/addmovie/newcategory" className="block text-white bg-red-600 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-              ایجاد دسته بندی
-            </Link>
-           </div>
+              <div className="flex justify-start m-1">
+                <Link
+                  to="/dashboard/addmovie/newcategory"
+                  className="block text-white bg-red-600 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                >
+                  ایجاد دسته بندی
+                </Link>
+              </div>
               {/* <!-- Modal body --> */}
               <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="grid gap-4 mb-4 sm:grid-cols-2">
-                    <div className="flex justify-between items-center">
-                  <div className="col-span-full">
-                    <label
-                      className="block mb-2 text-sm font-medium text-black dark:text-black"
-                      form="file_input"
-                    >
-                     عکس بزرگ
-                    </label>
-                    <input
-                      className="block p-2 w-full text-sm text-gray-900 border border-gray-300 rounded-sm cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                      type="file"
-                      {...register("backdrop_path")}
-                    />
-                  </div>
-                  <div className="col-span-full">
-                    <label
-                      className="block mb-2 text-sm font-medium text-black dark:text-black"
-                      form="file_input"
-                    >
-                     عکس کوچک
-                    </label>
-                    <input
-                      className="block p-2 w-full text-sm text-gray-900 border border-gray-300 rounded-sm cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                      type="file"
-                      {...register("poster_path")}
-                    />
-                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="col-span-full">
+                      <label
+                        className="block mb-2 text-sm font-medium text-black dark:text-black"
+                        form="file_input"
+                      >
+                        عکس بزرگ
+                      </label>
+                      <input
+                        className="block p-2 w-full text-sm text-gray-900 border border-gray-300 rounded-sm cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                        type="file"
+                        {...register("backdrop_path")}
+                      />
+                    </div>
+                    <div className="col-span-full">
+                      <label
+                        className="block mb-2 text-sm font-medium text-black dark:text-black"
+                        form="file_input"
+                      >
+                        عکس کوچک
+                      </label>
+                      <input
+                        className="block p-2 w-full text-sm text-gray-900 border border-gray-300 rounded-sm cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                        type="file"
+                        {...register("poster_path")}
+                      />
+                    </div>
                   </div>
                   <div>
                     <label
@@ -187,11 +186,9 @@ const InsertMovie = () => {
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
                       {errors.adult && (
-                        <p className="text-sm  text-orange-500">
-                            
-                        </p>
+                        <p className="text-sm  text-orange-500"></p>
                       )}
-                         اسم کوتاه
+                      اسم کوتاه
                     </label>
                     <input
                       type="text"
@@ -207,7 +204,7 @@ const InsertMovie = () => {
                     >
                       {errors.original_title && (
                         <p className="text-sm  text-orange-500">
-                             نام کامل فیلم
+                          نام کامل فیلم
                         </p>
                       )}
                       اسم کامل فیلم
@@ -225,11 +222,9 @@ const InsertMovie = () => {
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
                       {errors.vote_average && (
-                        <p className="text-sm  text-orange-500">
-                            
-                        </p>
+                        <p className="text-sm  text-orange-500"></p>
                       )}
-                          میانگین امتیاز
+                      میانگین امتیاز
                     </label>
                     <input
                       type="number"
@@ -244,11 +239,9 @@ const InsertMovie = () => {
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
                       {errors.vote_count && (
-                        <p className="text-sm  text-orange-500">
-                            
-                        </p>
+                        <p className="text-sm  text-orange-500"></p>
                       )}
-                           امتیاز
+                      امتیاز
                     </label>
                     <input
                       type="number"
@@ -263,11 +256,9 @@ const InsertMovie = () => {
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
                       {errors.media_type && (
-                        <p className="text-sm  text-orange-500">
-                            
-                        </p>
+                        <p className="text-sm  text-orange-500"></p>
                       )}
-                           نوع فیلم
+                      نوع فیلم
                     </label>
                     <input
                       type="text"
@@ -282,13 +273,11 @@ const InsertMovie = () => {
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
                       {errors.adult && (
-                        <p className="text-sm  text-orange-500">
-                          رده سنی بالا
-                        </p>
+                        <p className="text-sm  text-orange-500">رده سنی بالا</p>
                       )}
-                       رده سنی بالا
+                      رده سنی بالا
                     </label>
-                     <select
+                    <select
                       {...register("adult")}
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-primary-500 dark:focus:border-primary-500"
                     >
@@ -302,11 +291,9 @@ const InsertMovie = () => {
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
                       {errors.popularity && (
-                        <p className="text-sm  text-orange-500">
-                            بازدید 
-                        </p>
+                        <p className="text-sm  text-orange-500">بازدید</p>
                       )}
-                       بازدید
+                      بازدید
                     </label>
                     <input
                       type="number"
@@ -323,11 +310,9 @@ const InsertMovie = () => {
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
                       {errors.movieid && (
-                        <p className="text-sm  text-orange-500">
-                            آیدی فیلم 
-                        </p>
+                        <p className="text-sm  text-orange-500">آیدی فیلم</p>
                       )}
-                       آیدی فیلم
+                      آیدی فیلم
                     </label>
                     <input
                       type="number"
@@ -346,15 +331,18 @@ const InsertMovie = () => {
                     >
                       تاریخ ساخت
                     </label>
-                    <DatePicker selected={startDate} onChange={(date:Date) => setStartDate(date)} className="text-black border-black w-full "/>
-
+                    <DatePicker
+                      selected={startDate}
+                      onChange={(date: Date) => setStartDate(date)}
+                      className="text-black border-black w-full "
+                    />
                   </div>
                   <div>
                     <label
                       form=""
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
-                      زبان 
+                      زبان
                     </label>
                     <select
                       {...register("original_language")}
@@ -370,7 +358,7 @@ const InsertMovie = () => {
                       form=""
                       className="block mb-2 text-sm font-medium text-black dark:text-black"
                     >
-                       ویدئو
+                      ویدئو
                     </label>
                     <select
                       {...register("video")}
@@ -391,9 +379,9 @@ const InsertMovie = () => {
                       {...register("genre_ids")}
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-primary-500 dark:focus:border-primary-500"
                     >
-                        {categorys?.map((item,i)=>(
-                           <option value={item?.bits}>{item?.title}</option>
-                        ))}
+                      {categorys?.map((item, i) => (
+                        <option value={item?.bits}>{item?.title}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="sm:col-span-2">
@@ -424,7 +412,7 @@ const InsertMovie = () => {
           </div>
         </div>
       </motion.div>
-      <Outlet/>
+      <Outlet />
     </>
   );
 };

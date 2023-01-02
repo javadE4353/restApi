@@ -48,7 +48,7 @@ function Row({ title, movies, category }: Props) {
           className="flex items-center space-x-0.5 overflow-x-scroll overflow-y-hidden scrollbar-hide md:space-x-2.5 md:p-2"
           ref={rowRef}
         >
-          {movies? (
+          {movies ? (
             <>
               {movies?.map((movie, i) => (
                 <>
@@ -58,9 +58,9 @@ function Row({ title, movies, category }: Props) {
                     </>
                   ) : (
                     <>
-                    {
-                      movie?.genre_ids.includes(category) && <Thumbnail key={movie.id} movie={movie} />
-                    }
+                      {movie?.genre_ids.includes(category) && (
+                        <Thumbnail key={movie.id} movie={movie} />
+                      )}
                     </>
                   )}
                 </>

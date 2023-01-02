@@ -9,10 +9,8 @@ import ClipLoader from "react-spinners/ClipLoader";
 import { motion } from "framer-motion";
 
 //
-import newAccessTokenAction from "../redux/actionCreator/actionCreateAccessToken";
 import loginAction from "../redux/actionCreator/actionCreateAuth";
 import { Movies, StateTypeAuth, Userinfo } from "../typeing";
-import { getAllmovie, getmovies } from "../redux/actionCreator/actionMovie";
 
 //interface
 interface Inputs {
@@ -59,7 +57,6 @@ function Login() {
     if (loginState?.errorMessage === null && loginState?.accessToken !== null) {
       setErrorMsg("");
       navigate("/");
-      dispatch(newAccessTokenAction(dispatch));
     }
   }, [loginState?.isLoading]);
 
@@ -71,10 +68,6 @@ function Login() {
   useEffect(() => {
     setMovie(banner?.[Math.floor(Math.random() * banner.length)]);
   }, [banner]);
-
-  useEffect(() => {
-    dispatch(getAllmovie());
-  }, []);
 
   return (
     <motion.div

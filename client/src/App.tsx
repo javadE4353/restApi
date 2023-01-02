@@ -12,7 +12,7 @@ import newAccessTokenAction from "./redux/actionCreator/actionCreateAccessToken"
 import ConfigPages from "./configPages/ConfigPages";
 import { Movies, StateAccessToken } from "./typeing";
 
-import getCategorys from "./redux/actionCreator/actionCreateCategory";
+import getCategorys, { getPublicCategory } from "./redux/actionCreator/actionCreateCategory";
 interface MoviesType {
   movies: {
     Allmovie: Movies[] | null;
@@ -24,7 +24,7 @@ const App: React.FC = () => {
   const dispatch: Dispatch<any> = useDispatch();
   useEffect(() => {
     dispatch(getAllmovie());
-    dispatch(getCategorys());
+    dispatch(getPublicCategory());
     dispatch(newAccessTokenAction(dispatch));
   }, []);
 
@@ -33,17 +33,17 @@ const App: React.FC = () => {
       setMovie(movies);
     }
   }, [movies]);
-  console.log(movies)
   return (
     <>
-      {movie.length > 0 ? (
+    <ConfigPages />
+      {/* {movie.length > 0 ? (
         <ConfigPages />
       ) : (
         <motion.div
           className="h-140 w-screen"
-          initial={{ width: 0 }}
-          animate={{ width: "100%" }}
-          exit={{ x: window.innerWidth }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity:0 }}
         >
           <img
             src={`${baseUrl.originalImage}/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg`}
@@ -51,7 +51,7 @@ const App: React.FC = () => {
             alt=""
           />
         </motion.div>
-      )}
+      )} */}
     </>
   );
 };

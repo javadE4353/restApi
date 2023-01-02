@@ -44,6 +44,7 @@ import {
   insertRatings,
 } from "../redux/actionCreator/actionCreateRatings";
 import getmovies, { updatemovie } from "../redux/actionCreator/actionMovie";
+import axios from "axios";
 
 //interface
 const override: CSSProperties = {
@@ -87,6 +88,11 @@ function Modal() {
   const [rated, setRated] = useState<boolean>(false);
   const [showModal, setShowModal] = useRecoilState(modalState);
   const [muted, setMuted] = useState(true);
+  //showmovie
+  const [play, setPlay] = useState<boolean>(false);
+  const [loadingMovie, setLoadingMovie] = useState<boolean>(false);
+  const [errorMoviePlay, setErrorMoviePlay] = useState<string>("");
+  //
   const [ratings, setRatings] = useState<number>(0);
   const [showCament, setShowCament] = useState<boolean>(false);
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -109,35 +115,39 @@ function Modal() {
     maxWidth: "1000px",
   };
 
-  useEffect(() => {
-    if (!movie) return;
-
-    async function fetchMovie() {
-      try {
-        const data = await fetch(
-          `https://api.themoviedb.org/3/${
-            movie?.media_type === "tv" ? "tv" : "movie"
-          }/${movie?.movieid}?api_key=${
-            apiConfig.apiKey
-          }&language=en-US&append_to_response=videos`
-        ).then((response) => response.json());
-        if (data?.videos) {
-          console.log(data?.videos?.results);
-          const index = data.videos.results.findIndex(
-            (element: Element) => element.type === "Trailer"
-          );
-          setTrailer(data.videos?.results[index]?.key);
-        }
-        if (data?.genres) {
-          setGenres(data.genres);
-        }
-      } catch (error) {
-        // console.log(error)
+  async function fetchMovie() {
+    try {
+      const data = await axios.get(
+        `https://api.themoviedb.org/3/${
+          movie?.media_type === "tv" ? "tv" : "movie"
+        }/${movie?.movieid}?api_key=${
+          apiConfig.apiKey
+        }&language=en-US&append_to_response=videos`
+      );
+      console.log(data);
+      if (data.data?.videos) {
+        // console.log(data?.videos?.results);
+        const index = data?.data.videos.results.findIndex(
+          (element: Element) => element.type === "Trailer"
+        );
+        setTrailer(data?.data.videos?.results[index]?.key);
       }
+      if (data.data?.genres) {
+        setGenres(data.data?.genres);
+      }
+      setLoadingMovie(false);
+    } catch (error) {
+      setErrorMoviePlay("Network Error");
+      setLoadingMovie(false);
     }
-
-    fetchMovie();
-  }, [movie?.id]);
+  }
+  useEffect(() => {
+    setErrorMoviePlay("");
+    setLoadingMovie(true);
+    if (movie && play) {
+      fetchMovie();
+    }
+  }, [play]);
 
   const handleClose = () => {
     setShowModal(false);
@@ -153,7 +163,7 @@ function Modal() {
     if (user?.accessToken && user?.userInfo?.id) {
       const dublicate = mylist?.mylist?.find(
         (item: Movies) =>
-          item.movieid === movie?.id || item.movieid === movie?.movieid
+          item.id === movie?.id 
       );
       if (dublicate !== undefined) {
         setMovies(dublicate);
@@ -198,14 +208,9 @@ function Modal() {
       user?.userInfo?.id !== undefined &&
       addedToList === true
     ) {
-      if (movies?.movieid) {
+      if (movies && user?.userInfo) {
         dispatch(
-          removeMovieMylist(user?.userInfo?.id, movies?.movieid, axiosPrivate)
-        );
-      }
-      if (!movies?.movieid) {
-        dispatch(
-          removeMovieMylist(user?.userInfo?.id, movies?.id, axiosPrivate)
+          removeMovieMylist(axiosPrivate, user.userInfo.id, movies?.id, {})
         );
       }
       setAddedToList(false);
@@ -341,18 +346,46 @@ function Modal() {
           </button>
 
           <div className="relative pt-[56.25%]">
-            <ReactPlayer
-              url={`https://www.youtube.com/watch?v=${trailer}`}
-              width="100%"
-              height="100%"
-              style={{ position: "absolute", top: "0", left: "0" }}
-              playing
-              loop
-              controls
-              volume={1}
-              light={true}
-              muted={muted}
-            />
+            <>
+              {play ? (
+                <>
+                  {errorMoviePlay ? (
+                    <div className="absolute inset-y-0 h-full w-full text-center text-black bg-white flex items-center justify-center">{errorMoviePlay}</div>
+                  ) : (
+                    <ReactPlayer
+                      url={`https://www.youtube.com/watch?v=${trailer}`}
+                      width="100%"
+                      height="100%"
+                      style={{ position: "absolute", top: "0", left: "0" }}
+                      playing
+                      loop
+                      controls
+                      volume={1}
+                      light={true}
+                      muted={muted}
+                    />
+                  )}
+                </>
+              ) : (
+                <div
+                  className="w-full bg-cover bg-no-repeat bg-center absolute inset-y-0 h-full"
+                  style={{
+                    backgroundImage: `url(https://image.tmdb.org/t/p/original/${movie?.poster_path})`,
+                  }}
+                >
+                   <div
+                     className="w-[40%] absolute  h-full rounded py-4 px-4"
+                   >
+                   <div
+                    className="w-full bg-contain bg-no-repeat bg-center h-full rounded py-4 px-4"
+                    style={{
+                      backgroundImage: `url(https://image.tmdb.org/t/p/original/${movie?.poster_path})`,
+                    }}
+                  ></div>
+                   </div>
+                </div>
+              )}
+            </>
             <div className="absolute bottom-10 flex w-full items-center justify-between px-10"></div>
           </div>
           <div className="flex flex-col space-x-16 rounded-b-md bg-[#181818] px-10 py-8">
@@ -362,9 +395,12 @@ function Modal() {
               </div>
               <div>
                 <div className="flex justify-around space-x-2 p-4 border border-white border-solid rounded-md justify-center w-auto lg:w-[30%] md:w-[50%]">
-                  <button className="flex border border-blue-400 items-center gap-x-2 rounded pl-8 text-xl font-bold text-white transition hover:bg-[#e6e6e6]">
+                  <button
+                    onClick={() => setPlay(!play)}
+                    className="flex border border-blue-400 items-center gap-x-2 rounded pl-8 text-xl font-bold text-white transition hover:bg-[#e6e6e6]"
+                  >
                     <FaPlay className="h-7 w-7 text-black" />
-                    نمایش
+                    {play ? "خروج" : "نمایش"}
                   </button>
                   <button
                     className="mr-4 modalButton"

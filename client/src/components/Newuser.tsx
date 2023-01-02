@@ -1,4 +1,4 @@
-import { useState,CSSProperties,useCallback ,useEffect} from "react";
+import { useState, CSSProperties, useCallback, useEffect } from "react";
 
 //module extra
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -11,7 +11,6 @@ import { HiOutlineXMark } from "react-icons/hi2";
 import { useRecoilState } from "recoil";
 import { useNavigate } from "react-router-dom";
 import MoonLoader from "react-spinners/MoonLoader";
-
 
 //
 import useAxiosPrivate from "../hook/useAxiosPrivate";
@@ -65,6 +64,7 @@ interface Inputs {
 //component
 const NewUser = () => {
   let [color, setColor] = useState("#ffffff");
+  let [modal, setModal] = useState<boolean>(false);
   const [showModalCreateUser, setShowModalCreateUser] =
     useRecoilState(modalCreateUser);
 
@@ -80,7 +80,8 @@ const NewUser = () => {
     formState: { errors },
   } = useForm<Inputs>();
   const handleClose = () => {
-    setShowModalCreateUser(!showModalCreateUser);
+    setModal(false);
+    navigate("/dashboard/users")
   };
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
@@ -94,18 +95,20 @@ const NewUser = () => {
     formData.append("roleuser", data.roleuser);
     dispatch(insertUser(axiosPrivate, formData));
   };
-  
-  
-  const handleInsert=useCallback(()=>{
-    if(stateUsers?.insert === 1){
-      dispatch(getUsers(axiosPrivate,1,3));
+
+  const handleInsert = useCallback(() => {
+    if (stateUsers?.insert === 1) {
+      dispatch(getUsers(axiosPrivate, { page: 1, pageSize: 3 }));
       setShowModalCreateUser(false);
     }
-  },[stateUsers?.insert])
+  }, [stateUsers?.insert]);
 
   useEffect(() => {
-    handleInsert()
-  }, [stateUsers?.insert])
+    handleInsert();
+  }, [stateUsers?.insert]);
+  useEffect(() => {
+    setModal(true);
+  }, []);
   return (
     <>
       <MuiModal
@@ -122,12 +125,24 @@ const NewUser = () => {
         />
       </MuiModal>
       <MuiModal
-        open={stateUsers?.insert === 102?true:stateUsers?.insert===1?false:false}
+        open={
+          stateUsers?.insert === 102
+            ? true
+            : stateUsers?.insert === 1
+            ? false
+            : false
+        }
         className="fixed !top-7 left-0 right-0 z-50 mx-auto w-full max-w-5xl overflow-hidden overflow-y-scroll rounded-md scrollbar-hide"
       >
         <MoonLoader
           color={"#36d7b7"}
-          loading={stateUsers?.insert === 102?true:stateUsers?.insert===1?false:false}
+          loading={
+            stateUsers?.insert === 102
+              ? true
+              : stateUsers?.insert === 1
+              ? false
+              : false
+          }
           cssOverride={overrideupdate}
           size={50}
           aria-label="Loading Spinner"
@@ -135,14 +150,14 @@ const NewUser = () => {
         />
       </MuiModal>
       <MuiModal
-        open={showModalCreateUser}
+        open={modal}
         onClose={() => handleClose()}
         className="fixed  overflow-x-hidden !top-7 left-0 right-0 z-50 mx-auto w-full max-w-5xl overflow-hidden overflow-y-scroll rounded-md scrollbar-hide"
       >
         <motion.div
-          initial={{ opacity: 0, x: 0 }}
-          animate={{ opacity: 1, x: 0, transition: { duration: 0.3 } }}
-          exit={{ opacity: 0, x: 0, transition: { duration: 0.1 } }}
+          // initial={{ opacity: 0, x: 0 }}
+          // animate={{ opacity: 1, x: 0, transition: { duration: 0.3 } }}
+          // exit={{ opacity: 0, x: 0, transition: { duration: 0.1 } }}
         >
           <div className="flex justify-center m-5">
             <span className="block text-white bg-red-600 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">

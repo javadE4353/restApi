@@ -18,13 +18,13 @@ const useRefreshToken = () => {
           userInfo: data?.data.userInfo,
         },
       });
-      dispatch({
-        type: ACCESSTOKEN_SUCCESS,
-        payload:{
-          accessToken:data?.data.accessToken,
-          errorMessage:null
-        }
-      });
+      // dispatch({
+      //   type: ACCESSTOKEN_SUCCESS,
+      //   payload:{
+      //     accessToken:data?.data.accessToken,
+      //     errorMessage:null
+      //   }
+      // });
 
       return data?.data.accessToken;
     } catch (error) {

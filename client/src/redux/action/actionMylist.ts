@@ -10,17 +10,21 @@ interface requestmylist {
   type: "REQUESTMYLIST";
 }
 interface successmylist {
-  type: "REQUESTSECCESSMYLIST";
-  payload: Movies[];
+  type: "REQUESTSECCESSMYLIST"
+  payload: {mylist:Movies[],insert:number,delete:number,count:number}
 }
 interface insertmyist {
-  type: "INSERTMYLIST";
+  type: "INSERTMYLIST"
+  payload: {insert:number}
+
 }
 interface faildmylist {
   type: "REQUESTFAILDMYLIST";
 }
 interface removemylist {
-  type: "REMOVEMYLIST";
+  type: "REMOVEMYLIST"
+  payload: {delete:number}
+
 }
 
 export type Action =

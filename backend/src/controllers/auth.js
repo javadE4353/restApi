@@ -17,23 +17,23 @@ export const authController = new (class AuthController {
       return responce({
         res,
         code: 401,
-        message: "error validate",
+        message: "The information entered is incorrect",
         data: error.array(),
       });
     }
-   //
-const dublicateUsername = await db.user.findOne({
-  where: {
-    username: req.body.username,
-  },
-});
-if (dublicateUsername !== null) {
-  return responce({
-    res,
-    code: 409,
-    message: "already username",
-  });
-}
+    //
+    const dublicateUsername = await db.user.findOne({
+      where: {
+        username: req.body.username,
+      },
+    });
+    if (dublicateUsername !== null) {
+      return responce({
+        res,
+        code: 409,
+        message: "There is a user with this username",
+      });
+    }
     //
     const dublicate = await db.user.findOne({
       where: {
@@ -45,7 +45,7 @@ if (dublicateUsername !== null) {
       return responce({
         res,
         code: 409,
-        message: "already user",
+        message: "There is a user with this username",
       });
     }
 
@@ -54,42 +54,57 @@ if (dublicateUsername !== null) {
     if (req.file) {
       data.img = req.file.path.replace(/\\/g, "/").substring(6);
     }
+    try {
+      const newUser = await db.user.create(
+        {
+          username: username,
+          mobile: mobile,
+          email: email,
+          image: `http://localhost:4000/${data.img}`,
+          password: password,
+          roleuser: req.body.role ? req.body.role : null,
+          role: [{}],
+        },
+        {
+          include: db.Role,
+        }
+      );
 
-    const newUser = await db.user.create(
-      {
-        username: username,
-        mobile: mobile,
-        email: email,
-        image: `http://localhost:4000/${data.img}`,
-        password: password,
-        roleuser:req.body.role?req.body.role:null,
-        role: [{}],
-      },
-      {
-        include: db.Role,
+      // check roles
+      if (db.ROLES.includes(role)) {
+        const Role = await db.Role.findOne({ where: { name: role } });
+        await db.RoleHasUser.create({
+          roleId: Role.toJSON().id,
+          userId: newUser.toJSON().id,
+        });
+        await db.user.update(
+          { roleuser: Role.toJSON().name },
+          { where: { username: username } }
+        );
+      } else {
+        const Role = await db.Role.findOne({ where: { name: db.ROLES[1] } });
+        await db.RoleHasUser.create({
+          roleId: Role.toJSON().id,
+          userId: newUser.toJSON().id,
+        });
+        await db.user.update(
+          { roleuser: Role.toJSON().name },
+          { where: { username: username } }
+        );
       }
-    );
-
-    // check roles
-    if (db.ROLES.includes(role)) {
-      const Role = await db.Role.findOne({ where: { name: role } });
-      await db.RoleHasUser.create({
-        roleId: Role.toJSON().id,
-        userId: newUser.toJSON().id,
+      responce({
+        res,
+        code: 201,
+        message: `create user ${username}`,
+        data: newUser,
       });
-    } else {
-      const Role = await db.Role.findOne({ where: { name: db.ROLES[1] } });
-      await db.RoleHasUser.create({
-        roleId: Role.toJSON().id,
-        userId: newUser.toJSON().id,
+    } catch (error) {
+      responce({
+        res,
+        code: 500,
+        message: "please try again later",
       });
     }
-    responce({
-      res,
-      code: 201,
-      message: `create user ${username}`,
-      data:newUser
-    });
   }
 
   async handleLogin(req, res) {
@@ -111,7 +126,6 @@ if (dublicateUsername !== null) {
       where: { username: username },
       include: db.Role,
     });
-
     if (fondUser === null) {
       return responce({
         res,
@@ -124,8 +138,7 @@ if (dublicateUsername !== null) {
     fondUser = JSON.parse(JSON.stringify(fondUser));
     //match password
     const match = await bcrypt.compare(password, fondUser.password);
-    console.log(match)
-
+    // console.log(match)
     if (!match) {
       return responce({
         res,
@@ -134,7 +147,6 @@ if (dublicateUsername !== null) {
         data: {},
       });
     }
-    console.log(fondUser)
     // create access token
     const accessToken = jwt.sign(
       {
@@ -184,13 +196,12 @@ if (dublicateUsername !== null) {
       name: refreshToken,
       userId: fondUser.id,
     });
-
     // set refreshcookie in cookie client
     res.cookie("jwt", refreshToken, {
       httpOnly: true,
       secure: true,
       samsite: "none",
-      maxAge: 24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000,
     });
     const userInfo = {
       role: fondUser?.roles?.[0]?.name,

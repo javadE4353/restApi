@@ -5,6 +5,7 @@ import {
   UPDATECATEGORY,
   DELETECATEGORY,
   FAILCATEGORY,
+  GETCATEGORYPUBLIC,
 } from "../../types/types";
 
 import { Action } from "../../action/actionCategory";
@@ -18,18 +19,22 @@ interface Cat{
 
 interface Categorys {
   categorys: Cat[] | null;
+  categoryPublic:Cat[] | null
   update:number
   delete:number
   insert:number
+  count:number 
   isloading: boolean;
   ErrorMassege:string | null
 }
 
 const initialState = {
   categorys: null,
+  categoryPublic:null,
   update:0,
   delete:0,
   insert:0,
+  count:0,
   isloading: false,
   ErrorMassege: null
 
@@ -48,7 +53,14 @@ const categoryReducer = (state: Categorys = initialState, action: Action) => {
     case GETCATEGORY:
       return {
         categorys: action?.payload?.categorys,
-        isloading: true,
+        count: action?.payload?.count,
+        isloading: false,
+      };
+      break;
+    case GETCATEGORYPUBLIC:
+      return {
+        categoryPublic: action?.payload?.categoryPublic,
+        isloading: false,
       };
       break;
     case INSERTCATEGORY:
