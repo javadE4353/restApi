@@ -1,10 +1,7 @@
 import { useEffect, useState, CSSProperties } from "react";
 
 //module external
-import {
-  getComments,
-  insertComment,
-} from "../redux/actionCreator/actionCreateComment";
+
 import { useSelector, useDispatch } from "react-redux";
 import { Dispatch } from "redux";
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -17,7 +14,12 @@ import {
 } from "react-icons/hi2";
 
 //
-import { CommentType, Movies } from "../typeing";
+import {
+  DeleteComment,
+  getComments,
+  insertComment,
+} from "../redux/actionCreator/actionCreateComment";
+import { CommentType, Movies, StateTypeAuth } from "../typeing";
 import useAxiosPrivate from "../hook/useAxiosPrivate";
 
 //interface
@@ -32,10 +34,6 @@ const override: CSSProperties = {
 };
 
 interface Props {
-  items: CommentType[] | null;
-  username: string;
-  movieid: number;
-  movietitle: string;
   ratings: number;
   newratings: number;
   movie: Movies;
@@ -43,30 +41,26 @@ interface Props {
 
 interface Comment {
   comment: {
-    comment: CommentType[] | null;
-    insert: number | null;
-    ErrorMassege: null | string;
+    comment: CommentType[];
+    insert: number;
+    ErrorMassege: string;
     isLoading: boolean;
   };
 }
 
 //component
-const Comments = ({
-  items,
-  username,
-  movieid,
-  movietitle,
-  ratings,
-  newratings,
-  movie,
-}: Props) => {
+const Comments = ({ ratings, newratings, movie }: Props) => {
   let [color, setColor] = useState("#ffffff");
   const [collaps, setCollaps] = useState<boolean>(false);
   const [id, setId] = useState<number | null>(null);
-  const axiosPrivate = useAxiosPrivate();
-  const dispatch: Dispatch<any> = useDispatch();
+  //COMMENTS
+  const [comments, setComments] = useState<CommentType[]>([]);
+  //
   const comment = useSelector((state: Comment) => state?.comment);
-
+  const user = useSelector((state: StateTypeAuth) => state?.auth);
+  //
+  const dispatch: Dispatch<any> = useDispatch();
+  const axiosPrivate = useAxiosPrivate();
   const {
     register,
     handleSubmit,
@@ -75,31 +69,47 @@ const Comments = ({
   } = useForm();
 
   const onSubmit = (data: any) => {
-    const dataComent = {
-      movieid,
-      username,
-      movietitle: movietitle,
-      content: data?.textarea,
-      ratings: ratings + newratings,
-    };
-    dispatch(insertComment(dataComent, axiosPrivate));
-    console.log("submitComment");
+    if (user?.userInfo?.id && movie) {
+      console.log(user?.userInfo);
+      const dataComent = {
+        movieid: movie?.id,
+        userId: user?.userInfo?.id,
+        username: user?.userInfo?.username,
+        movietitle: movie?.title,
+        content: data?.textarea,
+        ratings: ratings + newratings,
+      };
+      dispatch(insertComment(dataComent, axiosPrivate));
+    }
   };
-
+  //
   const handleOption = (id: number) => {
     setCollaps(!collaps);
     setId(id);
   };
-
-  useEffect(() => {
-    if (movie?.movieid) {
-      dispatch(
-        getComments(movie?.original_title, movie?.movieid, axiosPrivate)
-      );
-    } else if (!movie?.movieid && movie?.original_title !== undefined) {
-      dispatch(getComments(movie?.original_title, movie?.id, axiosPrivate));
+  //
+  const handleDeleteComment = (
+    userid: number,
+    movieid: number,
+    movietitle: string,
+    createdAt:any
+  ) => {
+    if (userid && movieid && createdAt){
+      dispatch(DeleteComment(userid, movieid, movietitle,createdAt, axiosPrivate));
     }
-  }, [movie, comment?.insert]);
+  };
+  //
+  useEffect(() => {
+    if (movie?.id) {
+      dispatch(getComments(movie?.title, movie?.id, axiosPrivate));
+    }
+  }, []);
+  //
+  useEffect(() => {
+    if (comment?.comment) {
+      setComments(comment?.comment);
+    }
+  }, [comment?.comment]);
 
   return (
     <>
@@ -123,7 +133,7 @@ const Comments = ({
               نظرات
             </h2>
           </div>
-          <form className="mb-6" onSubmit={handleSubmit(onSubmit)}>
+          <form className="mb-6 sticky top-0 bottom-0 right-0 left-0 h-full" onSubmit={handleSubmit(onSubmit)}>
             <div className="py-2 px-4 mb-4 bg-white rounded-lg rounded-t-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
               <label form="comment" className="sr-only">
                 نظر شما
@@ -139,88 +149,101 @@ const Comments = ({
             </div>
             <button
               type="submit"
-              className="inline-flex items-center py-2.5 px-4 text-xs font-medium text-center text-white bg-primary-700 rounded-lg focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-900 hover:bg-primary-800 border border-white border-solid hover:bg-blue-400"
+              className="inline-flex items-center py-2.5 px-4 text-xs font-medium text-center text-white bg-blue-700 rounded-lg focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-900 hover:bg-primary-800 border border-white border-solid hover:bg-blue-400"
             >
               ثبت کامنت
             </button>
           </form>
-          {items?.map((com, i) => (
-            <>
-              <article
-                key={i}
-                className="p-6 mb-4 text-base bg-white border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-md"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center">
-                    <p className="inline-flex items-center mr-3 text-sm text-gray-900 dark:text-white ml-2">
-                      <img
-                        className="mr-2 w-6 h-6 rounded-full"
-                        src="https://flowbite.com/docs/images/people/profile-picture-4.jpg"
-                        alt="Helene Engels"
-                      />
-                      {com?.username}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <span>
-                        {timeago.format(com?.createdAt || "2022-10-25")}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                <p className=" break-all overflow-hidden text-gray-500 dark:text-gray-400">
-                  {com?.content}
-                </p>
-                <div className="flex items-center justify-between mt-4 space-x-4">
-                  <button
-                    type="button"
-                    className="flex  items-center text-sm text-gray-500 hover:underline dark:text-gray-400"
+          <div className=" overflow-hidden overflow-y-scroll !scrollbar-thin !scrollbar-track-transparent !scrollbar-thumb-blue-700">
+            <div className="h-full">
+              {comments.length > 0 &&
+                comments.map((com, i) => (
+                  <article
+                    key={i}
+                    className="p-6 mb-4 text-base bg-white border-t border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-md"
                   >
-                    <HiOutlineChatBubbleOvalLeftEllipsis size={20} />
-                    پاسخ
-                  </button>
-                  <div className=" flex justify-between z-10 w-36 bg-white divide-y divide-gray-100 dark:bg-gray-700 dark:divide-gray-600">
-                    <ul
-                      className={`flex absolute translate-x-[-35%] left-1/2 py-1 text-sm text-gray-700 dark:text-gray-200 ${
-                        collaps && i === id ? "visible" : "invisible"
-                      }`}
-                      aria-labelledby="dropdownMenuIconHorizontalButton"
-                    >
-                      <li>
-                        <a
-                          href="#"
-                          className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center">
+                        <p className="inline-flex items-center mr-3 text-sm text-gray-900 dark:text-white ml-2">
+                          <img
+                            className="mr-2 w-6 h-6 rounded-full"
+                            src="https://flowbite.com/docs/images/people/profile-picture-4.jpg"
+                            alt="Helene Engels"
+                          />
+                          {com?.username}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span>
+                            {timeago.format(com?.createdAt || "2022-10-25")}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    <p className=" break-all overflow-hidden text-gray-500 dark:text-gray-400">
+                      {com?.content}
+                    </p>
+                    <div className="flex items-center justify-between mt-4 space-x-4">
+                      <button
+                        type="button"
+                        className="flex  items-center text-sm text-gray-500 hover:underline dark:text-gray-400"
+                      >
+                        <HiOutlineChatBubbleOvalLeftEllipsis size={20} />
+                        پاسخ
+                      </button>
+                      <div className=" flex justify-between z-10 w-36 bg-white divide-y divide-gray-100 dark:bg-gray-700 dark:divide-gray-600">
+                        <ul
+                          className={`flex absolute translate-x-[-35%] left-1/2 py-1 text-sm text-gray-700 dark:text-gray-200 ${
+                            i === id ? "visible" : "invisible"
+                          }`}
+                          aria-labelledby="dropdownMenuIconHorizontalButton"
                         >
-                          ویرایش
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          href="#"
-                          className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                        >
-                          حذف
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          href="#"
-                          className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                        >
-                          گزارش
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-                  <button
-                    className="inline-flex items-center p-2 text-sm font-medium text-center text-gray-400 bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-                    onClick={() => handleOption(i)}
-                  >
-                    <HiOutlineEllipsisHorizontal size={25} />
-                  </button>
-                </div>
-              </article>
-            </>
-          ))}
+                          <li>
+                            <a
+                              href="#"
+                              className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                            >
+                              ویرایش
+                            </a>
+                          </li>
+                          {com.userId == user?.userInfo?.id ? (
+                            <li>
+                              <button
+                                onClick={() =>
+                                  handleDeleteComment(
+                                    com.userId,
+                                    com.movieid,
+                                    com.movietitle,
+                                    com.createdAt
+                                  )
+                                }
+                                className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                              >
+                                حذف
+                              </button>
+                            </li>
+                          ):null}
+                          <li>
+                            <a
+                              href="#"
+                              className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                            >
+                              گزارش
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                      <button
+                        className="inline-flex items-center p-2 text-sm font-medium text-center text-gray-400 bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                        onClick={() => handleOption(i)}
+                        
+                      >
+                        <HiOutlineEllipsisHorizontal size={25} />
+                      </button>
+                    </div>
+                  </article>
+                ))}
+            </div>
+          </div>
         </div>
       </section>
     </>

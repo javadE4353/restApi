@@ -1,5 +1,4 @@
 
-
 import { useState,CSSProperties,useCallback ,useEffect} from "react";
 
 //module extra
@@ -35,15 +34,6 @@ const overrideupdate: CSSProperties = {
   top: "50%",
   right: "44%",
 };
-interface State {
-  users: {
-    user: Users | null;
-    count: number;
-    insert: number;
-    isloading: boolean;
-    ErrorMessage: string | null;
-  };
-}
 
 interface Inputs {
   title: string;

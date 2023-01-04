@@ -1,5 +1,5 @@
 
-import { useState,CSSProperties,useCallback ,useEffect} from "react";
+import { useState,CSSProperties,useEffect} from "react";
 
 //module extra
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -9,8 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Dispatch } from "redux";
 import MuiModal from "@mui/material/Modal";
 import { HiOutlineXMark } from "react-icons/hi2";
-import { useRecoilState } from "recoil";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import MoonLoader from "react-spinners/MoonLoader";
 
 
@@ -35,15 +34,6 @@ const overrideupdate: CSSProperties = {
   top: "50%",
   right: "44%",
 };
-interface State {
-  users: {
-    user: Users | null;
-    count: number;
-    insert: number;
-    isloading: boolean;
-    ErrorMessage: string | null;
-  };
-}
 
 interface Inputs {
   title: string;

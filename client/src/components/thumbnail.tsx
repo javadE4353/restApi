@@ -4,27 +4,24 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 //
-import { modalState, movieState, showAlert } from "../atoms/modalAtom";
+import { showAlert } from "../atoms/modalAtom";
 import { Movies, StateTypeAuth, Userinfo } from "../typeing";
 
 //interface
 interface Props {
   movie: Movies | null;
+  category:number
 }
 
 //component
-function Thumbnail({ movie }: Props) {
-  const [currentMovie, setCurrentMovie] = useRecoilState(movieState);
+function Thumbnail({ movie,category }: Props) {
   const [showalret, setShowAlert] = useRecoilState(showAlert);
-  const [showModal, setShowModal] = useRecoilState(modalState);
   const user = useSelector((state: StateTypeAuth) => state?.auth);
   const navigate = useNavigate();
   const handleShowMovie = () => {
-    if (user?.userInfo?.username) {
-      setCurrentMovie(movie);
-      setShowModal(true);
+    if (user?.userInfo?.username && movie) {
       setShowAlert(false);
-      navigate("/movie");
+      navigate(`movie/${category===1?movie.movieid:movie.id}`);
     } else {
       setShowAlert(true);
     }

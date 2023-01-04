@@ -49,7 +49,6 @@ const login =
       });
     } catch (error: any) {
       let errorMessage = null;
-      // console.log(error?.response?.status)
       if (!error?.response) {
         console.log(error?.response?.status)
         errorMessage = "سرور پشتیبانی نمیشود";

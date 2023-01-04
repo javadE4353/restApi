@@ -94,12 +94,12 @@ const menuVariantsSectionFillter = {
 
 //interface
 interface Mylist {
-  mylist: { 
-    mylist: Movies[]
-    count:number
-    delete:number
-    isloading: boolean
-   };
+  mylist: {
+    mylist: Movies[];
+    count: number;
+    delete: number;
+    isloading: boolean;
+  };
 }
 const TableMovieMylist = () => {
   const [pageinationatom, setPageinationAtom] = useRecoilState(pageinationAtom);
@@ -119,7 +119,9 @@ const TableMovieMylist = () => {
     useState<boolean>(false);
   // state movies and categorys
   const user = useSelector((state: StateTypeAuth) => state?.auth);
-  const categorys = useSelector((state: Categorys) => state?.categorys?.categoryPublic);
+  const categorys = useSelector(
+    (state: Categorys) => state?.categorys?.categoryPublic
+  );
   const Mylist = useSelector((state: Mylist) => state?.mylist);
   //
   const dispatch: Dispatch<any> = useDispatch();
@@ -130,7 +132,7 @@ const TableMovieMylist = () => {
   const handleSearchMovie = (value: string) => {
     if (value && user?.userInfo) {
       console.log(value);
-      dispatch(getAllmylist(axiosPrivate, user.userInfo.id,{search: value }));
+      dispatch(getAllmylist(axiosPrivate, user.userInfo.id, { search: value }));
     }
   };
 
@@ -167,18 +169,14 @@ const TableMovieMylist = () => {
   //Delete the video.Based on ID and movie name
 
   const handleDeleteUser = (id: number) => {
-    console.log(id)
-    console.log(user?.userInfo?.id)
+    console.log(id);
+    console.log(user?.userInfo?.id);
     if (user?.userInfo && id)
       dispatch(
-        removeMovieMylist(
-          axiosPrivate,
-          user.userInfo.id,
-          id,
-         { page:pageinationatom,
-          pageSize:filterow
-        }
-        )
+        removeMovieMylist(axiosPrivate, user.userInfo.id, id, {
+          page: pageinationatom,
+          pageSize: filterow,
+        })
       );
   };
 
@@ -188,7 +186,7 @@ const TableMovieMylist = () => {
       const res = await axiosPrivate.get(`${BASE_URL}/mylist/count`);
       if (res && res.status == 200) {
         setfilterusrname(res.data?.data);
-        console.log(res)
+        console.log(res);
       }
     } catch (error) {}
   };
@@ -538,9 +536,7 @@ const TableMovieMylist = () => {
                     </td>
                     <td className="border border-slate-300 py-4 px-6">
                       <div className="flex justfy-center items-center  rounded-sm">
-                        <button
-                          className="text-black border border-red-100 hover:bg-white/[0.15] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-r-sm text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                        >
+                        <button className="text-black border border-red-100 hover:bg-white/[0.15] focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-r-sm text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                           <HiPencil size={20} />
                         </button>
                         <button

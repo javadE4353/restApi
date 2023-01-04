@@ -65,7 +65,7 @@ import { BASE_URL } from "../../axios/configApi";
           type: GETUSERS,
           payload:{users:response?.data?.data?.[0],ErrorMessage:null,count:response?.data?.data?.[1]?.count.count,insert:0,update:0,delete:0}
         });
-        console.log(response)
+        // console.log(response)
       } catch (error) {
         let ErrorMsg='error'
         dispatch({
@@ -112,7 +112,7 @@ import { BASE_URL } from "../../axios/configApi";
           });
           // console.log(response)
         }
-        console.log(response)
+        // console.log(response)
       } catch (error) {
         let ErrorMsg='error'
         dispatch({
@@ -186,7 +186,7 @@ import { BASE_URL } from "../../axios/configApi";
           type: INCERTUSER,
           payload:{insert:response?.data?.data[0],ErrorMessage:null}
         });
-        console.log(response)
+        // console.log(response)
       } catch (error) {
         let ErrorMsg='error'
         dispatch({

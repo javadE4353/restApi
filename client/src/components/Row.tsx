@@ -52,14 +52,14 @@ function Row({ title, movies, category }: Props) {
             <>
               {movies?.map((movie, i) => (
                 <>
-                  {category === 1 ? (
+                  {category === 1 && movie?.movieid ? (
                     <>
-                      <Thumbnail key={movie.id} movie={movie} />
+                      <Thumbnail key={movie.id} movie={movie} category={category} />
                     </>
                   ) : (
                     <>
                       {movie?.genre_ids.includes(category) && (
-                        <Thumbnail key={movie.id} movie={movie} />
+                        <Thumbnail key={movie.id} movie={movie} category={category} />
                       )}
                     </>
                   )}
@@ -69,7 +69,7 @@ function Row({ title, movies, category }: Props) {
           ) : (
             <>
               {moviefake?.map((movie, i) => (
-                <Thumbnail key={i} movie={movie} />
+                <Thumbnail key={i} movie={movie} category={category}/>
               ))}
             </>
           )}

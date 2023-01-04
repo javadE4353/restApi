@@ -71,7 +71,7 @@ const getCategorys = (axiosPrivate:AxiosInstance,option:Option) => {
   ) {
     baseUrl = `${url}`;
   }
-  console.log(baseUrl)
+  // console.log(baseUrl)
   return async (dispatch: DispatchType) => {
     dispatch({ type: REQUESCATEGORY });
     try {

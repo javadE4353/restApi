@@ -18,9 +18,15 @@ export const updateUser = async function (req, res) {
   const user = await db.user.findOne({
     where: { id: req.params.id },
   });
+
   if (!user) {
-    return res.status(400).send("کاربری وجود ندارد");
+    return responce({
+      res,
+      message: "There is no user",
+      code: 403,
+    });
   }
+  
   const data = {};
   if (req.file !== undefined && req.file !== null) {
     data.image = req.file.path.replace(/\\/g, "/").substring(6);
@@ -56,16 +62,29 @@ export const updateUser = async function (req, res) {
       );
       return res.status(200).json(updatedRows);
     } catch (err) {
-      res.status(500).json(err);
+      return responce({
+        res,
+        message: "Blocked Request",
+        code: 500,
+      });
     }
   } else {
     try {
       const updatedRows = await db.user.update(req.body, {
         where: { id: req.params.id },
       });
-      return res.status(200).json(updatedRows);
+      return responce({
+        res,
+        message: "edited",
+        code: 200,
+        data:updatedRows
+      });
     } catch (err) {
-      res.status(500).json(err);
+      return responce({
+        res,
+        message: "Blocked Request",
+        code: 500,
+      });
     }
   }
 };
@@ -87,14 +106,14 @@ export const deleteuser = async function (req, res) {
     responce({
       res,
       code: 200,
-      message: `remove user`,
+      message: `User deleted`,
       data: deleteuser,
     });
   } catch (err) {
     responce({
       res,
       code: 500,
-      message: `error delete user`,
+      message: `Blocked Request`,
       data: err,
     });
   }

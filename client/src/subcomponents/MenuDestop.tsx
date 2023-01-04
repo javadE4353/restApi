@@ -16,9 +16,6 @@ import InputSearch from "./InputSearch";
 interface Props {
   isScrolled: boolean;
 }
-interface togglesidebar {
-  sidebar: { toggle: boolean };
-}
 
 //component
 const MenuDesktop: React.FC<Props> = ({ isScrolled }) => {

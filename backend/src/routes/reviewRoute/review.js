@@ -7,5 +7,7 @@ const reviewRoute = express.Router();
 
 reviewRoute.post("/",verifyToken,verifyRoles(db.ROLES),reviewController.addcamment);
 reviewRoute.get("/",verifyToken,verifyRoles(db.ROLES),reviewController.getAllcamment);
+reviewRoute.delete("/",verifyToken,verifyRoles(db.ROLES),reviewController.removeCommentByUser);
+
 
 export default reviewRoute;

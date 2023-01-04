@@ -624,7 +624,6 @@ export const movieController = new (class MovieController {
     //get all movie ___option.search
     else if (req.query?.search) {
       try {
-        console.log(req.query.search);
         const page = 1;
         const pageSize = 1000;
         const value = "%" + req.query.search + "%";
@@ -715,5 +714,47 @@ export const movieController = new (class MovieController {
     }
   }
 
-  async getMovieByUser(req, res) {}
+  async getMovieByUser(req, res) {};
+  async FilterMovies(req, res) {
+    if (req.query?.search) {
+      try {
+        const movies = await db.Movies.findAll(
+            {
+              where: {
+                title: {
+                  [Op.substring]: req.query.search,
+                },
+              },
+              include: [{ model: db.Category }],
+              order: [
+                ["id", "DESC"],
+                
+              ],
+            },          
+        );
+        if (!movies) {
+          return responce({
+            res,
+            code: 403,
+            message: "notfound",
+          });
+        }
+        return responce({
+          res,
+          code: 200,
+          message: "success",
+          data:movies,
+        });
+      } catch (error) {
+        console.log(error);
+        return responce({
+          res,
+          code: 500,
+          message: "Blocked Request",
+          data: error,
+        });
+      }
+    }
+
+  }
 })();

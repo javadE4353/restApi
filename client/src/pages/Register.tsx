@@ -45,6 +45,7 @@ function Register() {
         navigate("/login");
       }
     } catch (error: any) {
+      console.log(error?.response)
       let ErrorMessage = "";
       if (error?.response?.status === 401) {
         ErrorMessage = " اطلاعات وارد شده صحیح نمیباشد";

@@ -1,46 +1,105 @@
 import db from "../model/index.js";
 import { responce } from "../util/configResponce.js";
-import {Op} from "sequelize"
+import { Op } from "sequelize";
 
-export const reviewController=new( class ReviewController{
+export const reviewController = new (class ReviewController {
+  constructor() {}
 
-constructor(){}
+  async addcamment(req, res) {
+    const { userId, movieid, movietitle, content, ratings } = req.body;
 
-async addcamment(req,res){
+    if (!userId || !movietitle || !content) {
+      return responce({
+        res,
+        code: 400,
+        message: "Bad request",
+      });
+    }
+    const user = await db.user.findOne({ where: { id: userId } });
 
-const {username,movieid,movietitle,content,ratings}=req.body;
+    if (!user) {
+      return responce({
+        res,
+        code: 400,
+        message: "Bad request",
+      });
+    }
 
-if (!username && !movietitle && !content) {
-    return res.status(400).send("")
-}
-
-const user=await db.user.findOne({where:{username:username}})
-
-if (!user) {
-    return res.status(400).send("")
-}
-
-const newComent=await db.Review.create(req.body)
-
-
-responce({
-    res,
-    code:200,
-    message:"ok",
-    data:newComent
-})
-
-}
-async getAllcamment(req,res){
-const {movieid,movietitle}=req.query
-const comment=await db.Review.findAll({where:{[Op.and]:[{movieid:movieid},{movietitle:movietitle}]}})
-responce({
-    res,
-    code:200,
-    message:"ok",
-    data:comment
-})
-
-}
-
-})()
+    try {
+      const newComent = await db.Review.create({
+        ...req.body,
+        userId: user.toJSON().id,
+      });
+      return responce({
+        res,
+        code: 201,
+        message: "success",
+        data: newComent,
+      });
+    } catch (error) {
+      responce({
+        res,
+        code: 500,
+        message: "Blocked Request",
+      });
+    }
+  }
+  // getAllComment
+  async getAllcamment(req, res) {
+    const { movieid, movietitle } = req.query;
+    if (!movieid && !movietitle) {
+      responce({
+        res,
+        code: 400,
+        message: "Bad Request",
+      });
+    }
+    try {
+      const comment = await db.Review.findAll({
+        where: {
+          [Op.or]: [{ movietitle: movietitle }, { movieid: Number(movieid) }],
+        },
+      });
+      return responce({
+        res,
+        code: 200,
+        message: "ok",
+        data: comment,
+      });
+    } catch (error) {
+      console.log(error);
+      responce({
+        res,
+        code: 500,
+        message: "Blocked Request",
+      });
+    }
+  }
+  // RemoveCommentByUser
+  async removeCommentByUser(req, res) {
+    const { userid, movieid,createdAt } = req.query;
+    if (!movieid || !userid) {
+      responce({
+        res,
+        code: 400,
+        message: "Bad Request",
+      });
+    }
+    try {
+      const comment = await db.Review.destroy({
+        where: { [Op.and]: [{ userId: userid }, { movieid: movieid },{createdAt:createdAt}] },
+      });
+      responce({
+        res,
+        code: 200,
+        message: "success",
+      });
+    } catch (error) {
+      responce({
+        res,
+        code: 500,
+        message: "Blocked Request",
+      });
+    }
+  }
+})();

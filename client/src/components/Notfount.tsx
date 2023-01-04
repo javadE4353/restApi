@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 
 const Notfount = () => {
+  const handleBack=()=>{
+    window.history.back()
+  }
   return (
     <section>
       <div className="bg-black text-white">
@@ -269,12 +272,12 @@ const Notfount = () => {
             <p className="text-sm md:text-base text-yellow-300 p-2 mb-4">
               صفحه پیدا نشد
             </p>
-            <Link
-              to="/"
+            <button
+              onClick={()=>handleBack()}
               className="bg-transparent hover:bg-yellow-300 text-yellow-300 hover:text-white rounded shadow hover:shadow-lg py-2 px-4 border border-yellow-300 hover:border-transparent"
             >
               برگشت
-            </Link>
+            </button>
           </div>
         </div>
       </div>

@@ -15,8 +15,9 @@ export const validatoreAuth = new (class ValidatoreAuth extends Validatore {
         .withMessage("email cannot be empty"),
       // .not(),
       body("mobile")
-        .isLength({ min: 11, max: 11 })
-        .withMessage("")
+        .isLength({min: 11, max:11})
+        .matches(/^(09|\+639)\d{9}$/)
+        .withMessage("The mobile number is wrong")
         .notEmpty()
         .withMessage("mobile cannot be empty"),
       // .not(),
@@ -27,7 +28,7 @@ export const validatoreAuth = new (class ValidatoreAuth extends Validatore {
         .withMessage("Username cannot be empty"),
       // .not(),
       body("password")
-        .isLength({ min: 8 })
+        .isLength({ min: 8,max:20 })
         .withMessage("password must be at least 8 characters")
         .matches(/(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-zA-Z])/)
         .withMessage(

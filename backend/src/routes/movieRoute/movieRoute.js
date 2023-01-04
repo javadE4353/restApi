@@ -50,10 +50,8 @@ movieRouter.delete(
   movieController.deleteMovie
 );
 movieRouter.get("/allmovie", movieController.getAllmovies);
-movieRouter.get(
-  "/count",
-  movieController.getCountMovie
-);
+movieRouter.get("/count", movieController.getCountMovie);
+movieRouter.get("/search", movieController.FilterMovies);
 movieRouter.get(
   "/:userid",
   verifyToken,

@@ -104,17 +104,21 @@ const ConfigPages = () => {
         <Route path="/login" element={<Login />}></Route>
         <Route path="/register" element={<Register />}></Route>
         <Route path="/" element={<Home />}>
-          <Route path="movie" element={<Modal />} />
+          <Route path="movie/:id" element={<Modal />} />
         </Route>
         <Route path="/unauthorized" element={<Unauthorized />}></Route>
         <Route
           path="/comedy"
           element={<Category movie={movies} gener={comedy} />}
-        ></Route>
+        >
+          <Route path="movie/:id" element={<Modal />} />
+        </Route>
         <Route
           path="/action"
           element={<Category movie={movies} gener={action} />}
-        ></Route>
+        >
+          <Route path="movie/:id" element={<Modal />} />
+        </Route>
         {/* Role Admin */}
         <Route element={<RequiredAuth allowedRoles={[ROLES.Admin]} />}>
           <Route path="/dashboard" element={<Dashboard path={"admin"} />}>
@@ -145,7 +149,9 @@ const ConfigPages = () => {
           <Route
             path="/mylist"
             element={<Category movie={mylist} gener={categoryMovies?.mylist} />}
-          ></Route>
+          >
+            <Route path="movie/:id" element={<Modal />} />
+          </Route>
         </Route>
         {/* Role User */}
         <Route element={<RequiredAuth allowedRoles={[ROLES.User]} />}>
@@ -160,7 +166,9 @@ const ConfigPages = () => {
           <Route
             path="/me/mylist"
             element={<Category movie={mylist} gener={categoryMovies?.mylist} />}
-          ></Route>
+          >
+            <Route path="movie/:id" element={<Modal />} />
+          </Route>
         </Route>
         {/* Route Notfount */}
         <Route path="*" element={<Notfount />}></Route>

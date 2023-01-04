@@ -34,7 +34,6 @@ const newAccessTokenAction = (dispaTch:Dispatch) => async (dispatch: DispatchTyp
       },
     });
   } catch (error:any) {
-    console.log(error);
     let errorMsg = '';
       if (!error?.response) {
         errorMsg = "Server not respond";

@@ -161,7 +161,7 @@ const Home: React.FC = () => {
           </section>
         </>
       </main>
-      {user?.accessToken ? <Outlet /> : null}
+      {user?.accessToken && <Outlet /> }
       <NavigationBottom />
     </div>
   );

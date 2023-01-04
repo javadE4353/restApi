@@ -5,35 +5,39 @@ import { useDispatch, useSelector } from "react-redux";
 import { Dispatch } from "redux";
 
 //
-import{ getAllmovie, getmovies } from "../redux/actionCreator/actionMovie";
+import { getAllmovie } from "../redux/actionCreator/actionMovie";
 import SliderItemHome from "../subcomponents/SliderItemHome";
 import { Movies } from "../typeing";
 
 //interface
 interface MoviesType {
-movies:{ 
-  movies: Movies[] | null;
-  movie: Movies | null;
-  insert: number;
-  update: number;
-  delete: number;
-  isloading: boolean;
-  ErrorMessage: string | null;}
+  movies: {
+    movies: Movies[] 
+    movie: Movies;
+    Allmovie:Movies[]
+    insert: number
+    update: number
+    delete: number
+    isloading: boolean
+    ErrorMessage: string 
+  };
 }
 
 //component
 const SliderHome: React.FC = () => {
   const [movie, setMovie] = useState<Movies | null>(null);
   const dispatch: Dispatch<any> = useDispatch();
-  const banner = useSelector((state: MoviesType) => state?.movies.movies);
+  // const banner = useSelector((state: MoviesType) => state?.movies.movies);
+  const banner = useSelector((state: MoviesType) => state?.movies?.Allmovie);
+
   useEffect(() => {
     dispatch(getAllmovie());
   }, []);
 
   useEffect(() => {
-     if(banner){
+    if (banner) {
       setMovie(banner?.[Math.floor(Math.random() * banner.length)]);
-     }
+    }
   }, [banner]);
 
   return (

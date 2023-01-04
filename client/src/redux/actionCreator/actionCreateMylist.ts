@@ -61,9 +61,7 @@ export const getAllmylist = (
   ) {
     baseUrl = `${url}`;
   }
-  console.log(baseUrl);
-
-  // console.log(userid);
+  // console.log(baseUrl);
   return async (dispatch: DispatchType) => {
     dispatch({ type: REQUESTMYLIST });
     try {
@@ -79,7 +77,7 @@ export const getAllmylist = (
         },
       });
     } catch (error) {
-      console.log(error)
+      // console.log(error)
       dispatch({
         type: REQUESTFAILDMYLIST,
         payload: { mylist: null, count:0, delete: 0, insert: 0 },
@@ -106,7 +104,7 @@ export const insertmylist = (movie: Movies, axiosPrivate: AxiosInstance) => {
 
     try {
       const response = await axiosPrivate.post(`${BASE_URL}/mylist`, movie);
-      console.log(response);
+      // console.log(response);
       dispatch({
         type: INSERTMYLIST,
         payload: { insert: 201 },
@@ -157,7 +155,7 @@ export const removeMovieMylist = (
   ) {
     baseUrl = `${url}`;
   }
-  console.log(baseUrl);
+  // console.log(baseUrl);
   return async (dispatch: DispatchTypeDelete) => {
     dispatch({ type: REQUESTMYLIST });
 
@@ -165,7 +163,7 @@ export const removeMovieMylist = (
       const response = await axiosPrivate.delete(
         `${BASE_URL}/mylist?userid=${userid}&movieid=${movieid}`
       );
-      console.log(response);
+      // console.log(response);
       dispatch({
         type: REMOVEMYLIST,
         payload: { mylist: null,count:0, delete: 200, insert: 0 },

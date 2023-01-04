@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useState, CSSProperties } from "react";
 
 //module external
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import ReactPlayer from "react-player/lazy";
 import { FaPlay } from "react-icons/fa";
 import { HiOutlineCheck } from "react-icons/hi";
 import { BsPlus } from "react-icons/bs";
 import { BsHandThumbsUpFill } from "react-icons/bs";
-import { BsFillVolumeMuteFill } from "react-icons/bs";
-import { BsFillVolumeUpFill } from "react-icons/bs";
 import MuiModal from "@mui/material/Modal";
 import toast, { Toaster } from "react-hot-toast";
 import { Dispatch } from "redux";
 import { useSelector, useDispatch } from "react-redux";
 import ClipLoader from "react-spinners/ClipLoader";
-import { MdOutlinePlaylistAdd } from "react-icons/md";
 
 //
 import {
@@ -56,18 +53,19 @@ const override: CSSProperties = {
   transform: "translate(-50%, -50%)",
   right: "44%",
 };
+const toastStyle = {
+  background: "white",
+  color: "black",
+  fontWeight: "bold",
+  fontSize: "16px",
+  padding: "15px",
+  borderRadius: "9999px",
+  maxWidth: "1000px",
+};
 interface Mylist {
   mylist: { mylist: Movies[]; isloading: boolean };
 }
 
-interface Comment {
-  comment: {
-    comment: CommentType[] | null;
-    insert: number | null;
-    ErrorMassege: null | string;
-    isLoading: boolean;
-  };
-}
 interface RatingsState {
   ratings: {
     ratings: Ratings[];
@@ -75,46 +73,50 @@ interface RatingsState {
     status: number;
   };
 }
-
+interface MoviesType {
+  movies: {
+    movie: Movies[];
+    Allmovie: Movies[];
+    insert: number;
+    update: number;
+    delete: number;
+    isloading: boolean;
+    ErrorMessage: string | null;
+  };
+}
 //component
 function Modal() {
   let [color, setColor] = useState("#ffffff");
   const [modal, setModal] = useState<boolean>(false);
-  const navigate = useNavigate();
 
   const [showmylist, setShowMylist] = useRecoilState(modalMylist);
-  const [movie, setMovie] = useRecoilState(movieState);
   const [trailer, setTrailer] = useState("");
   const [rated, setRated] = useState<boolean>(false);
-  const [showModal, setShowModal] = useRecoilState(modalState);
   const [muted, setMuted] = useState(true);
+  //stateMovie
+  const [movie, setMovie] = useState<Movies | null>(null);
   //showmovie
   const [play, setPlay] = useState<boolean>(false);
   const [loadingMovie, setLoadingMovie] = useState<boolean>(false);
   const [errorMoviePlay, setErrorMoviePlay] = useState<string>("");
-  //
   const [ratings, setRatings] = useState<number>(0);
   const [showCament, setShowCament] = useState<boolean>(false);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [addedToList, setAddedToList] = useState(false);
   const [movies, setMovies] = useState<null | Movies>(null);
-  const axiosPrivate = useAxiosPrivate();
+  //
+  // state redux
+  const stateRatings = useSelector((state: RatingsState) => state?.ratings);
   const mylist = useSelector((state: Mylist) => state?.mylist);
   const user = useSelector((state: StateTypeAuth) => state?.auth);
-  const comment = useSelector((state: Comment) => state?.comment);
-  const stateRatings = useSelector((state: RatingsState) => state?.ratings);
+  const allMovies = useSelector((state: MoviesType) => state?.movies?.Allmovie);
+  //
   const dispatch: Dispatch<any> = useDispatch();
-  // setMovies(mylist)
-  const toastStyle = {
-    background: "white",
-    color: "black",
-    fontWeight: "bold",
-    fontSize: "16px",
-    padding: "15px",
-    borderRadius: "9999px",
-    maxWidth: "1000px",
-  };
+  const {id}=useParams()
+  const navigate = useNavigate();
+  const axiosPrivate = useAxiosPrivate();
 
+  //
   async function fetchMovie() {
     try {
       const data = await axios.get(
@@ -150,12 +152,11 @@ function Modal() {
   }, [play]);
 
   const handleClose = () => {
-    setShowModal(false);
     setMovie(null);
     setShowMylist(!showmylist);
     toast.dismiss();
-    navigate("/");
     setModal(false);
+    window.history.back()
   };
 
   //   // Find all the movies in the user's list
@@ -173,7 +174,7 @@ function Modal() {
         setMovies(null);
       }
     }
-  }, [movie]);
+  }, [id]);
 
   const getRatingsAll = useCallback(() => {
     if (movie?.title) {
@@ -182,8 +183,10 @@ function Modal() {
   }, [movie, rated]);
 
   const handlechakRatings = useCallback(() => {
-    if (user?.userInfo?.id && stateRatings?.ratings) {
-      const dublicate = stateRatings?.ratings?.find((item: Ratings) => {
+    console.log(stateRatings?.ratings)
+    if (user?.userInfo?.id && stateRatings?.ratings?.length>=0) {
+      console.log(stateRatings?.ratings)
+      const dublicate = stateRatings.ratings.find((item: Ratings) => {
         if (
           item.userId === user?.userInfo?.id &&
           item.movietitle === movie?.title
@@ -307,14 +310,21 @@ function Modal() {
     mylistdata();
     handlechakRatings();
   }, [movie]);
-
+//
   useEffect(() => {
     setModal(true);
   }, []);
+  //
   useEffect(() => {
     handlechakRatings();
   }, [stateRatings?.status]);
-
+  //
+  useEffect(() => {
+   if(id){
+    const m=allMovies?.filter(item=>item.id === Number(id))
+    if(m.length>0)setMovie(m[0])
+   }
+  }, [id]);
   return (
     <>
       <MuiModal
@@ -454,16 +464,12 @@ function Modal() {
             </div>
             <div>
               <button onClick={() => setShowCament(!showCament)}>
-                نمایش نظرات
+                   برای مشاهده نظرات کلیک کنید
               </button>
 
               {movie && user?.userInfo && showCament ? (
                 <Comments
                   movie={movie}
-                  items={comment?.comment}
-                  username={user?.userInfo?.username}
-                  movieid={movie?.movieid || movie?.id}
-                  movietitle={movie?.original_title}
                   ratings={movie?.vote_count}
                   newratings={ratings}
                 />

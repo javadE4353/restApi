@@ -1,32 +1,19 @@
-import { useState, CSSProperties, useCallback, useEffect } from "react";
+import { useState, CSSProperties, useEffect } from "react";
 
 //module extra
 import { useForm, SubmitHandler } from "react-hook-form";
-import ClipLoader from "react-spinners/ClipLoader";
 import { motion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { Dispatch } from "redux";
-import MuiModal from "@mui/material/Modal";
-import { HiOutlineXMark } from "react-icons/hi2";
 import { useRecoilState } from "recoil";
 import { Link, useNavigate,Outlet, useParams } from "react-router-dom";
-import MoonLoader from "react-spinners/MoonLoader";
 import DatePicker from 'react-datepicker';
-import addDays from 'date-fns/addDays'
 import "react-datepicker/dist/react-datepicker.css";
 //
 import useAxiosPrivate from "../hook/useAxiosPrivate";
-
-import {
-  deleteUser,
-  getUser,
-  getUsers,
-  insertUser,
-  updateUser,
-} from "../redux/actionCreator/actionCreateUsers";
-import { Users, Userinfo, Movies, StateTypeAuth } from "../typeing";
-import { modalCreateUser, modalEditUser } from "../atoms/modalAtom";
-import getCategorys, { getPublicCategory } from "../redux/actionCreator/actionCreateCategory";
+import { Users, Movies, StateTypeAuth } from "../typeing";
+import { modalCreateUser } from "../atoms/modalAtom";
+import { getPublicCategory } from "../redux/actionCreator/actionCreateCategory";
 import { updatemovie } from "../redux/actionCreator/actionMovie";
 
 // interface and stylecss

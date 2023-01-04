@@ -138,7 +138,6 @@ const EditUser = ({path}:Props) => {
   useEffect(() => {
     handleupdate();
   }, [stateUsers?.update]);
-console.log(path)
   return (
     <>
       <MuiModal

@@ -79,7 +79,7 @@ export const getmovies = (axiosPrivate: AxiosInstance, option: Option) => {
   ) {
     baseUrl = `${url}`;
   }
-  console.log(baseUrl);
+  // console.log(baseUrl);
   return async (dispatch: DispatchType) => {
     dispatch({ type: REQUESTMOVIES });
     try {
@@ -199,7 +199,7 @@ export const getAllmovie = () => {
           ErrorMessage: null,
         },
       });
-      console.log(response);
+      // console.log(response);
     } catch (error) {
       let ErrorMsg = "error";
       dispatch({
@@ -302,11 +302,11 @@ export const deletemovie = (
               ErrorMessage: null,
             },
           });
-          console.log(response?.data?.data);
-          console.log(res?.data?.data);
+          // console.log(response?.data?.data);
+          // console.log(res?.data?.data);
         }
       }
-      console.log(response?.data?.data);
+      // console.log(response?.data?.data);
     } catch (error) {
       let ErrorMsg = "error";
       dispatch({
